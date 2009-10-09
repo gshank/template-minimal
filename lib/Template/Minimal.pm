@@ -46,7 +46,7 @@ my $tmpl_ident = qr{
     [a-z][a-z0-9_]+ # any alphanumeric characters and underscores, but must start
                     # with a letter; everything must be lower case
 }x;
-my $tmpl_section = qr{ SECTION \s+ ($tmpl_ident) }x;
+my $tmpl_foreach = qr{ FOREACH \s+ ($tmpl_ident) \s+ IN \s+ ($tmpl_ident) }x;
 my $tmpl_if = qr{ IF \s+ ($tmpl_ident) }x;
 my $tmpl_include = qr{ INCLUDE \s+ ["']? ([^"']+) ["']?  }x;
 my $tmpl_vars = qr{ (?: \s* \| \s* )?  ( $tmpl_ident ) }x;
@@ -54,7 +54,7 @@ my $tmpl_directive = qr{
     $START
         \s*?
         (END
-            | $tmpl_section
+            | $tmpl_foreach
             | $tmpl_if
             | $tmpl_include
             | [a-z0-9_\s\|]+
@@ -67,24 +67,25 @@ sub parse_tmpl {
     my ( $self, $tpl ) = @_;
     my (@chunks) = grep { defined $_ && $_ } ( $tpl =~ m{$tmpl_chunks}g );
     my @AST;
+$DB::single=1;
     while ( my $chunk = shift @chunks ) {
-        if ( my ($dir) = $chunk =~ $tmpl_directive ) {
-            if ( my ($sec_name) = $dir =~ $tmpl_section ) {
-                $sec_name =~ s/['"]//g;
-                push @AST, [ SECTION => $sec_name ];
+        if ( my ($tdir) = $chunk =~ $tmpl_directive ) {
+            if ( my ($for_name) = $tdir =~ $tmpl_foreach ) {
+                $for_name =~ s/['"]//g;
+                push @AST, [ FOREACH => [$1, $2] ];
             }
-            elsif ( my ($if_name) = $dir =~ $tmpl_if ) {
+            elsif ( my ($if_name) = $tdir =~ $tmpl_if ) {
                 $if_name =~ s/['"]//g;
                 push @AST, [ IF => $if_name ];
             }
-            elsif ( my ($inc_name) = $dir =~ $tmpl_include ) {
+            elsif ( my ($inc_name) = $tdir =~ $tmpl_include ) {
                 $inc_name =~ s/['"]//g;
                 push @AST, [ INCLUDE => $inc_name ];
             }
-            elsif ( $dir =~ m{END} ) {
+            elsif ( $tdir =~ m{END} ) {
                 push @AST, ['END'];
             }
-            elsif ( my (@items) = $dir =~ m{$tmpl_vars}g ) {
+            elsif ( my (@items) = $tdir =~ m{$tmpl_vars}g ) {
                 push @AST, [ VARS => [@items] ];
             }
         }
@@ -148,13 +149,16 @@ sub compile_tmpl {
             $current_level--;
             pop @current_stash;
         }
-        elsif ( $type eq 'SECTION' ) {
+        elsif ( $type eq 'FOREACH' ) {
+$DB::single=1;
             my $cur = $current_stash[-1];
             my $old = $names[$cur];
-            push @current_stash, $cur + 1;
+            push @current_stash, $cur;
             $current_level++;
-            my $new = $names[ $current_stash[-1] ];
-            $code .= "  for my \$stash_$new ( \$stash_$old\->sections('$val') ) {\n";
+            my $each = $val->[0];
+            my $array = $val->[1];
+            $code .= "  for my \$$each ( \$stash_$old\->get('$array') ) {\n";
+            $code .= "    \$stash->set_var($each, \$each);\n";
         }
         elsif ( $type eq 'IF' ) {
            push @current_stash, $current_stash[-1];

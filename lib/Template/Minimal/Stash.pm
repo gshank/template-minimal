@@ -3,7 +3,15 @@ package Template::Minimal::Stash;
 use Moose;
 use Try::Tiny;
 
-has vars => (is => 'rw', isa => 'HashRef', default => sub { {} });
+has vars => (
+   is => 'rw', 
+   traits => ['Hash'],
+   isa => 'HashRef', 
+   default => sub { {} },
+   handles => {
+      set_var => 'set',
+   }
+);
 #has _sections => (is => 'rw', isa => 'HashRef[ArrayRef]', default => sub { {} });
 
 sub BUILDARGS { 

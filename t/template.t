@@ -164,53 +164,6 @@ sub check {
 }
 
 
-basic: {
-    my $stash = Stash->new();
-    isa_ok($stash, 'Template::Minimal::Stash');
-}
-
-accessor: {
-    my $stash = Stash->new({
-        a => 1,    
-    });
-
-    is $stash->get('a'), 1, 'Basic stash retrieval';
-}
-
-sections: {
-    my $stash  = Stash->new({});
-    my $stash2 = Stash->new({});
-    my $stash3 = Stash->new({});
-
-    $stash->add_section('name', $stash2);
-    $stash->add_section('name', $stash3);
-
-    my @sections = $stash->sections('name');
-    is scalar(@sections), 2, 'Correct number of sections';
-    is_deeply [@sections], [$stash2, $stash3], 'Correct sections';
-}
-
-multi_sections: {
-    my $stash  = Stash->new({});
-    my $stash2 = Stash->new({});
-    my $stash3 = Stash->new({});
-
-    $stash->add_section('name', $stash2, $stash3);
-
-    my @sections = $stash->sections('name');
-    is scalar(@sections), 2, 'Correct number of sections';
-    is_deeply [@sections], [$stash2, $stash3], 'Correct sections';
-}
-
-empty_section: {
-    my $stash  = Stash->new({});
-
-    $stash->add_section('name');
-
-    my @sections = $stash->sections('name');
-    is scalar(@sections), 1, 'Correct number of sections';
-    is_deeply [@sections], [undef], 'Correct sections';
-}
 
 
 basic: {

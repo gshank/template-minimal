@@ -3,7 +3,7 @@
   <body>
     <p>My favourite things, [% interest %]!</p>
     <ul>
-      [% SECTION items %]
+      [% FOREACH item IN items %]
         <li>[% item %]</li>
       [% END %]
     </ul>

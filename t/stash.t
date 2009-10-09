@@ -30,6 +30,18 @@ $stash = Stash->new( { names => ['Bob', 'Bill'] } );
 ok( $stash, 'stash with array' );
 is_deeply( $stash->get('names'), ['Bob', 'Bill'], 'get array from stash'); 
 
+$stash = Stash->new( {objects => ['one', 'two', 'three']} );
 
+is( test_foreach($stash), "one two three ", 'foreach loop works');
+
+sub test_foreach {
+    my $stash = shift;
+    my $out;
+    foreach my $obj (@{$stash->get('objects')}) {
+        $stash->set_var('obj', $obj);
+        $out .=  "$obj ";
+    }
+    return $out;
+}
 
 done_testing;
