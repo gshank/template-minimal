@@ -3,8 +3,19 @@ package Template::Minimal::Stash;
 use Moose;
 use Try::Tiny;
 
+=head1 NAME
+
+Template::Minimal::Stash
+
+=head1 SYNOPSIS
+
+For use in Template::Minimal templates. Retrieves the value of variables
+in C< var.key >> and C< var.method > style.
+
+=cut
+
 has vars => (
-   is => 'rw', 
+   is => 'ro', 
    traits => ['Hash'],
    isa => 'HashRef', 
    default => sub { {} },
@@ -12,18 +23,10 @@ has vars => (
       set_var => 'set',
    }
 );
-#has _sections => (is => 'rw', isa => 'HashRef[ArrayRef]', default => sub { {} });
 
 sub BUILDARGS { 
     return { vars => ($_[1]||{}) }; 
 }
-
-#sub sections { @{ $_[0]->_sections->{$_[1]} || [] }; }
-#sub add_section {
-#    my ($self,$sec,@stashes) = @_;
-#    $self->_sections->{$sec} ||= [];
-#    push @{ $self->_sections->{$sec} }, (@stashes ? @stashes : undef); 
-#}
 
 sub get { 
     my ($self, $ident, $args) = @_;
@@ -97,7 +100,18 @@ sub _dotop {
     return undef;
 }
 
+=head1 AUTHOR
 
+Gerda Shank, E<lt>gshank@cpan.orgE<gt>
+
+Largely borrowed from L<Template::Stash> by Andy Wardley
+
+=head1 LICENSE
+
+This library is free software, you can redistribute it and/or modify it under
+the same terms as Perl itself.
+
+=cut
 
 __PACKAGE__->meta->make_immutable();
 1;

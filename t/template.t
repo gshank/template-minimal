@@ -151,7 +151,7 @@ sub check {
 
 basic: {
     my $stash = Stash->new({ name => 'Perl Hacker', title => 'paper', });
-    my $tt = Template::Minimal->new({ tmpl_include_path => ['t/tmpl'], });
+    my $tt = Template::Minimal->new({ include_path => ['t/tmpl'], });
     my $out = $tt->process_file('foo.tpl', $stash);
     my $expected = <<'END';
 
@@ -174,7 +174,7 @@ foreach: {
 
 
     my $tt = Template::Minimal->new({
-        tmpl_include_path => ['t/tmpl'],
+        include_path => ['t/tmpl'],
     });
 
     my $out = $tt->process_file('nested.tpl', $stash );
@@ -207,7 +207,7 @@ horror: {
     });
 
     my $tt = Template::Minimal->new({
-        tmpl_include_path => ['t/tmpl'],
+        include_path => ['t/tmpl'],
     });
 
     my $out = $tt->process_file('horror.tpl', $stash);

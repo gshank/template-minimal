@@ -3,17 +3,56 @@ package Template::Minimal;
 use Moose;
 use aliased 'Template::Minimal::Stash';
 
+=head1 NAME
+
+Template::Minimal - minimal, lightweight templates
+
+=head1 SYNOPSIS
+
+    my $widget = 
+    '<input type="text" name="[% f.html_name %]" id="[% f.id %]" 
+        [% IF f.size %]size="[% f.size %]"[% END %] 
+        [% IF f.maxlength %]maxlength="[% f.maxlength %]"[% END %]
+        value="[% r.fif %]">';
+    has 'template' => ( is => 'ro', isa => 'Template::Minimal', builder => 'build_template');
+    sub build_template {
+        my $self = shift;
+        my $tt = Template::Minimal->new;
+        $tt->add_template('text_widget', $widget );
+        return $tt;
+    }
+   <...>
+   my $output = $self->template->process('text_widget', {
+                f => $self, r => $result });
+  
+=head1 DESCRIPTION
+
+For very lightweight templates, particularly those embedded in code instead
+of as separate files. Intended to be roughly upward compatible with Template Toolkit,
+but only implementing a very small subset of TT's syntax.
+
+=head1 SYNTAX
+
+   [% somevar %]
+   [% somehash.somekey %]
+   [% someobj.somemethod %]
+   [% IF somevar %]....[% END %]
+   [% FOREACH element IN somelist %] ... [% END %]
+   [% INCLUDE some_other_template %]
+
+=cut
+
 our $TMPL_CODE_START = <<'END';
 sub {
     my ($stash) = @_;
     my $out;
 END
 
-our $TMPL_CODE_END = <<'END';
+our $TMPL_CODE_END = <<'END'y
 }
 END
 
-has tmpl_include_path => (
+has include_path => (
     is       => 'rw',
     isa      => 'ArrayRef[Str]',
     required => 1,
@@ -238,7 +277,7 @@ sub _get_tmpl_str {
     my ( $self, $tpl ) = @_;
 
     my $tpl_str     = '';
-    my @dirs_to_try = @{ $self->tmpl_include_path };
+    my @dirs_to_try = @{ $self->include_path };
     my $file;
     while ( my $dir = shift @dirs_to_try ) {
         my $tmp = $dir . '/' . $tpl;
@@ -265,6 +304,19 @@ sub quote_lists {
     }
     return $string;
 }
+
+=head1 AUTHOR
+
+Gerda Shank E<lt>gshank@cpan.orgE<gt>
+
+Some portions borrowed from L<Template::Teeny> by Scott McWhirter
+
+=head1 LICENSE 
+
+This library is free software, you can redistribute it and/or modify it under
+the same terms as Perl itself.
+
+=cut
 
 1;
 
