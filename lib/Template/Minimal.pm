@@ -48,11 +48,11 @@ sub {
     my $out;
 END
 
-our $TMPL_CODE_END = <<'END'y
+our $TMPL_CODE_END = <<'END';
 }
 END
 
-has include_path => (
+has 'include_path' => (
     is       => 'rw',
     isa      => 'ArrayRef[Str]',
     required => 1,
@@ -104,6 +104,7 @@ my $tmpl_directive = qr{
 
 sub parse_tmpl {
     my ( $self, $tpl ) = @_;
+$DB::single=1;
     my (@chunks) = grep { defined $_ && $_ } ( $tpl =~ m{$tmpl_chunks}g );
     my @AST;
     while ( my $chunk = shift @chunks ) {
@@ -152,6 +153,11 @@ sub _optimize_tmpl {
                 @long = [ CONCAT => [@long] ];
             }
             push @OPT, @long;
+        }
+        elsif ( $type eq 'FOREACH' ) {
+$DB::single=1;
+            my @long = ($item);
+            push @OPT, $item;
         }
         else {
             push @OPT, $item;
