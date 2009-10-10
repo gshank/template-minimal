@@ -9,88 +9,78 @@ use aliased 'Template::Minimal::Stash';
 
 my $tt = Template::Minimal->new();
 
-basic_text: {
-    my $str = $tt->compile_tmpl(
-        [[ TEXT => 'Hello one and all' ]],
-    );
-
-    my $expected = <<'END';
-sub {
-    my ($stash_a) = @_;
+my $str = $tt->compile_tmpl(
+    [[ TEXT => 'Hello one and all' ]],
+);
+my $expected = 
+'sub {
+    my ($stash) = @_;
     my $out;
-  $out .= 'Hello one and all';
+  $out .= \'Hello one and all\';
 }
-END
+';
+is( $str, $expected, 'Basic Text works' );
 
-    is $str, $expected, 'Basic Text works';
-}
-
-basic_var: {
-    my $str = $tt->compile_tmpl(
-        [[ VARS => ['albert'] ]],
-    );
-
-    my $expected = <<'END';
-sub {
-    my ($stash_a) = @_;
+$str = $tt->compile_tmpl(
+    [[ VARS => ['albert'] ]],
+);
+$expected =
+'sub {
+    my ($stash) = @_;
     my $out;
-  $out .= $stash_a->get('albert');
+  $out .= $stash->get(\'albert\');
 }
-END
+';
+is( $str, $expected, 'Basic Variable works');
 
-    is $str, $expected, 'Basic Variable works';
-}
+$str = $tt->compile_tmpl(
+    [[ FOREACH => ['blog', "blogs" ]], [ 'END' ]],
+);
 
-basic_section: {
-    my $str = $tt->compile_tmpl(
-        [[ SECTION => "blog" ], [ 'END' ]],
-    );
-    
-    my $expected = <<'END';
-sub {
-    my ($stash_a) = @_;
+$expected = 
+'sub {
+    my ($stash) = @_;
     my $out;
-  for my $stash_b ( $stash_a->sections('blog') ) {
+  foreach my $blog ( @{$stash->get(\'blogs\')} ) {
+    $stash->set_var(\'blog\', $blog);
   }
 }
-END
+';
 
-    is $str, $expected, 'Basic Section works';
-}
+is( $str, $expected, 'Basic foreach works');
 
-complex: {
-    my $str = $tt->compile_tmpl(
-        [
-            [TEXT => 'hehehe sucka '],
-            [VARS => ['name', 'escape_html']],
-            [TEXT => "\n        "],
-            [SECTION => 'foo'],
-            [TEXT => ' '],
-            [VARS => ['hehe']],
-            [TEXT => ' '],
-            ['END'],
-        ],
-    );
+$str = $tt->compile_tmpl(
+    [
+        [TEXT => 'hehehe sucka '],
+        [VARS => ['name', 'escape_html']],
+        [TEXT => "\n        "],
+        [FOREACH => ['foo', 'foos']],
+        [TEXT => ' '],
+        [VARS => ['foo.hehe']],
+        [TEXT => ' '],
+        ['END'],
+    ],
+);
 
-    my $expected = <<'END';
+$expected = <<'END';
 sub {
-    my ($stash_a) = @_;
+    my ($stash) = @_;
     my $out;
   $out .= 'hehehe sucka ';
-  $out .= $stash_a->get('name', 'escape_html');
+  $out .= $stash->get('name', 'escape_html');
   $out .= '
         ';
-  for my $stash_b ( $stash_a->sections('foo') ) {
+  foreach my $foo ( @{$stash->get('foos')} ) {
+    $stash->set_var('foo', $foo);
   $out .= ' ';
-  $out .= $stash_b->get('hehe');
+  $out .= $stash->get('foo.hehe');
   $out .= ' ';
   }
 }
 END
 
 
-    is $str, $expected, 'Complex example works';
-}
+is( $str, $expected, 'Complex example works' );
 
 $tt = Template::Minimal->new();
 
@@ -123,14 +113,6 @@ basic_with_filters: {
     );
 }
 
-section: {
-    check(
-        '[% SECTION hehe %][% END %]',
-        [[ SECTION => 'hehe' ], [ 'END' ]], 
-        'Sections'
-    );
-}
-
 include: {
     check(
         "[% INCLUDE 'hehe.html' %]",
@@ -139,17 +121,18 @@ include: {
     );
 }
 
+$DB::single=1;
 complex: {
     check(
         'hehehe sucka [% name | escape_html %]
-        [% SECTION foo %] [%hehe%] [% END %]',
+        [% FOREACH foo IN foos %] [% foo.hehe %] [% END %]',
         [
             [TEXT => 'hehehe sucka '],
             [VARS => ['name', 'escape_html']],
             [TEXT => "\n        "],
-            [SECTION => 'foo'],
+            [FOREACH => ['foo', 'foos']],
             [TEXT => ' '],
-            [VARS => ['hehe']],
+            [VARS => ['foo.hehe']],
             [TEXT => ' '],
             ['END'],
         ],
@@ -167,15 +150,8 @@ sub check {
 
 
 basic: {
-    my $stash = Stash->new({
-        name => 'Perl Hacker', title => 'paper',
-    });
-
-    my $tt = Template::Minimal->new({
-        tmpl_include_path => ['t/tmpl'],
-    });
-
-    
+    my $stash = Stash->new({ name => 'Perl Hacker', title => 'paper', });
+    my $tt = Template::Minimal->new({ tmpl_include_path => ['t/tmpl'], });
     my $out = $tt->process_file('foo.tpl', $stash);
     my $expected = <<'END';
 
@@ -189,18 +165,13 @@ END
 
 $DB::single=1;
 
-nested_sections: {
+foreach: {
     my $stash = Stash->new({
         name => 'Charlie', interest => 'movies',
+        items => ['Happy Gilmore', 'Care Bears'],
+        possible_geek => 1,
     });
 
-    my $item1 = Stash->new({ item => 'Happy Gilmore' });
-    my $item2 = Stash->new({ item => 'Care Bears' });
-    
-    $stash->add_section('items', $item1);
-    $stash->add_section('items', $item2);
-
-    $stash->add_section('possible_geek');
 
     my $tt = Template::Minimal->new({
         tmpl_include_path => ['t/tmpl'],

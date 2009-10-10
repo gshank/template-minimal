@@ -8,7 +8,7 @@
       [% END %]
     </ul>
 
-    [% SECTION possible_geek %]
+    [% IF possible_geek %]
         <span>I likes DnD...</span>
     [% END %]
   </body>

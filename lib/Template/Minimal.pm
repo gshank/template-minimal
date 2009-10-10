@@ -5,7 +5,7 @@ use aliased 'Template::Minimal::Stash';
 
 our $TMPL_CODE_START = <<'END';
 sub {
-    my ($stash_a) = @_;
+    my ($stash) = @_;
     my $out;
 END
 
@@ -43,7 +43,7 @@ my $tmpl_text        = qr{
 }msx;
 my $tmpl_chunks = qr{ ($tmpl_text)?  ($tmpl_declaration)?  }msx;
 my $tmpl_ident = qr{
-    [a-z][a-z0-9_]+ # any alphanumeric characters and underscores, but must start
+    [a-z][a-z0-9_\.]+ # any alphanumeric characters and underscores, but must start
                     # with a letter; everything must be lower case
 }x;
 my $tmpl_foreach = qr{ FOREACH \s+ ($tmpl_ident) \s+ IN \s+ ($tmpl_ident) }x;
@@ -57,7 +57,7 @@ my $tmpl_directive = qr{
             | $tmpl_foreach
             | $tmpl_if
             | $tmpl_include
-            | [a-z0-9_\s\|]+
+            | [a-z0-9_\.\s\|]+
         )
         \s*?
     $END
@@ -67,7 +67,6 @@ sub parse_tmpl {
     my ( $self, $tpl ) = @_;
     my (@chunks) = grep { defined $_ && $_ } ( $tpl =~ m{$tmpl_chunks}g );
     my @AST;
-$DB::single=1;
     while ( my $chunk = shift @chunks ) {
         if ( my ($tdir) = $chunk =~ $tmpl_directive ) {
             if ( my ($for_name) = $tdir =~ $tmpl_foreach ) {
@@ -126,8 +125,6 @@ sub compile_tmpl {
     my ( $self, $AST ) = @_;
 
     my $current_level = 0;
-    my @current_stash; 
-    push @current_stash, $current_level;
     my $code = '';
     if ( !$current_level ) {
         $code .= $TMPL_CODE_START;
@@ -141,30 +138,23 @@ sub compile_tmpl {
         }
         elsif ( $type eq 'VARS' ) {
             $code .=
-                q{  $out .= $stash_} . $names[$current_stash[-1]] . q{->get(} .
+                q{  $out .= $stash->get(} .
                 quote_lists(@$val) . qq{);\n};
         }
         elsif ( $type eq 'END' ) {
             $code .= "  }\n";
             $current_level--;
-            pop @current_stash;
         }
         elsif ( $type eq 'FOREACH' ) {
-$DB::single=1;
-            my $cur = $current_stash[-1];
-            my $old = $names[$cur];
-            push @current_stash, $cur;
             $current_level++;
             my $each = $val->[0];
             my $array = $val->[1];
-            $code .= "  for my \$$each ( \$stash_$old\->get('$array') ) {\n";
-            $code .= "    \$stash->set_var($each, \$each);\n";
+            $code .= "  foreach my \$$each ( \@{\$stash\->get('$array')} ) {\n";
+            $code .= "    \$stash->set_var('$each', \$$each);\n";
         }
         elsif ( $type eq 'IF' ) {
-           push @current_stash, $current_stash[-1];
            $current_level++;
-           my $cur = $names[$current_stash[-1]];
-           $code .= " if ( \$stash_$cur->get('$val') ) {\n";
+           $code .= " if ( \$stash->get('$val') ) {\n";
         }
         elsif ( $type eq 'CONCAT' ) {
             my ( $t, $v ) = @{ shift @$val };
@@ -174,7 +164,7 @@ $DB::single=1;
             }
             elsif ( $t eq 'VARS' ) {
                 $code .=
-                    q{  $out .= $stash_} . $names[$current_stash[-1]] . q{->get(} .
+                    q{  $out .= $stash->get(} .
                     quote_lists(@$val) . qq{)};
             }
             for my $concat (@$val) {
@@ -186,7 +176,7 @@ $DB::single=1;
                 }
                 elsif ( $ct eq 'VARS' ) {
                     $code .=
-                        qq{\n    . \$stash_} . $names[$current_stash[-1]] . q{->get(qw(} .
+                        qq{\n    . \$stash->get(qw(} .
                         join( ' ', @$cv ) . qq{))};
                 }
             }

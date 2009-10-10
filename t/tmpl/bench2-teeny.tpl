@@ -2,10 +2,10 @@
   <head><title>[% title %]</title></head>
   <body>
     <ul>
-      [% SECTION post %]
+      [% FOREACH post IN posts %]
         <li>
-            <h3>[% title %]</h3>
-            <span>[% date %]</span>
+            <h3>[% post.title %]</h3>
+            <span>[% post.date %]</span>
         </li>
       [% END %]
     </ul>

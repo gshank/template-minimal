@@ -59,10 +59,17 @@ sub _dotop {
     $args ||= [];
     return undef unless defined( $root ) and defined ($item);
     if( $atroot || $rootref eq 'HASH' ) {
-        if( defined( $value = $root->{ $item } ) ) {
-            return $value;
+        if( exists $root->{ $item } ) {
+            my $value = $root->{$item};
+            if( ref $value eq 'CODE' ) {
+                @result = &$value(@$args);
+            }
+            else {
+                return $value;
+            }
         }
         elsif ( ref $item eq 'ARRAY' ) {
+            # hash slice
             return [@$root{@$item}];
         }
     }
@@ -86,9 +93,6 @@ sub _dotop {
     }
     if( defined $result[0]) {
         return scalar @result > 1 ? { @result } : $result[0];
-    }
-    else {
-        die "unable to find variable";
     }
     return undef;
 }
