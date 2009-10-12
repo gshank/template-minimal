@@ -9,45 +9,66 @@ use aliased 'Template::Minimal::Stash';
 
 my $tt = Template::Minimal->new();
 
-my $str = $tt->compile_tmpl(
+my $compiled = $tt->compile(
     [[ TEXT => 'Hello, world!' ]],
 );
 my $expected = 
 'sub {
-    my ($stash) = @_;
-    my $out;
+  my ($stash) = @_;
+  my $out;
   $out .= \'Hello, world!\';
 }
 ';
-is( $str, $expected, 'text compiles' );
+is( $compiled, $expected, 'text compiles' );
+my $coderef = eval($compiled);
+ok( $coderef, 'text evals ok');
+my $out = $coderef->();
+is( $out, "Hello, world!", 'text executes ok');
 
-$str = $tt->compile_tmpl(
+$compiled = $tt->compile(
+    [[ TEXT => 'Newline' ], [ NEWLINE => 1 ]],
+);
+$expected =
+'sub {
+  my ($stash) = @_;
+  my $out;
+  $out .= \'Newline\';
+  $out .= "\n";
+}
+';
+is( $compiled, $expected, 'newline compiles' );
+$coderef = eval($compiled);
+ok( $coderef, 'newline evals ok');
+$out = $coderef->();
+is($out, "Newline\n", 'newline executes ok');
+
+$compiled = $tt->compile(
     [[ VARS => ['George'] ]],
 );
 $expected =
 'sub {
-    my ($stash) = @_;
-    my $out;
+  my ($stash) = @_;
+  my $out;
   $out .= $stash->get(\'George\');
 }
 ';
-is( $str, $expected, 'variable compiles');
+is( $compiled, $expected, 'variable compiles');
 
-$str = $tt->compile_tmpl(
+$compiled = $tt->compile(
     [[ FOREACH => ['blog', "blogs" ]], [ 'END' ]],
 );
 
 $expected = 
 'sub {
-    my ($stash) = @_;
-    my $out;
+  my ($stash) = @_;
+  my $out;
   foreach my $blog ( @{$stash->get(\'blogs\')} ) {
     $stash->set_var(\'blog\', $blog);
   }
 }
 ';
 
-is( $str, $expected, 'foreach compiles');
+is( $compiled, $expected, 'foreach compiles');
 
 $tt = Template::Minimal->new();
 
@@ -79,7 +100,7 @@ parse_check(
 
 sub parse_check {
     my ($tpl, $ast, $cmt) = @_;
-    my $got = $tt->parse_tmpl($tpl);
+    my $got = $tt->parse($tpl);
     cmp_deeply($got, $ast, $cmt);
 }
 
@@ -93,6 +114,7 @@ basic: {
 Hi Perl Hacker,
 
 This is my paper
+
 
 END
     is( $out, $expected, 'process file');

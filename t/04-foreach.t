@@ -12,10 +12,26 @@ my $template = "Testing....
 [% tag %]
 [% END %]
 ";
-my $ast = $tt->parse_tmpl($template);
+my $ast = $tt->parse($template);
 ok( $ast, 'parsed template' );
-my $compiled = $tt->compile_tmpl($ast);
-ok( $compiled, 'compiled template');
+my $compiled = $tt->compile($ast);
+my $expected = <<'END';
+sub {
+  my ($stash) = @_;
+  my $out;
+  $out .= 'Testing....';
+  $out .= "\n";
+  foreach my $tag ( @{$stash->get('tags')} ) {
+    $stash->set_var('tag', $tag);
+  $out .= "\n";
+  $out .= $stash->get('tag');
+  $out .= "\n";
+  }
+  $out .= "\n";
+}
+END
+
+is( $compiled, $expected,  'compiled template');
 my $stash = Stash->new({ tags => ['Perl', 'programming', 'MVC'] } );
 my $coderef = eval( $compiled );
 ok( $coderef, 'got coderef' );
@@ -50,7 +66,7 @@ $tt = Template::Minimal->new({
     include_path => ['t/tmpl'],
 });
 $out = $tt->process_file('nested.tpl', $stash );
-my $expected = <<'END';
+$expected = <<'END';
 <html>
   <head><title>Howdy Gilligan</title></head>
   <body>
@@ -68,6 +84,7 @@ my $expected = <<'END';
     
   </body>
 </html>
+
 END
 
 eq_or_diff( $out, $expected, 'More complex example' );

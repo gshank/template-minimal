@@ -44,7 +44,8 @@ my $expected =
 '    <input type="text" name="test_text" id="abc" 
         size="30" 
         maxlength="40"
-        value="">';
+        value="">
+';
 
 is( $field->render, $expected, 'renders ok');
 

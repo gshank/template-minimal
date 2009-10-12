@@ -14,15 +14,15 @@ my $tpl = 'The quick brown fox [% name | escape_html %]
 my $ast = [
     [TEXT => 'The quick brown fox '],
     [VARS => ['name', 'escape_html']],
-    [TEXT => "\n"],
+    [NEWLINE => 1],
     [FOREACH => ['foo', 'foos']],
     [VARS => ['foo.hehe']],
     ['END'],
 ];
 
-my $got = $tt->parse_tmpl($tpl);
+my $got = $tt->parse($tpl);
 cmp_deeply($got, $ast, 'parsed template');
-my $optimized = $tt->_optimize_tmpl($got);
+my $optimized = $tt->_optimize($got);
 
 
 

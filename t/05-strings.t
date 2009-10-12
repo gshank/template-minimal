@@ -19,7 +19,8 @@ my $out = $tt->process_str('input' => $template, Stash->new({css_class => 'cinpu
             fif => 'Testing'}));
 ok( $out, 'processed string template' );
 my $processed = '<div class="cinput">
-<input type="text">Testing</input>';
+<input type="text">Testing</input>
+';
 is( $out, $processed, 'output ok');
 
 $out = $tt->process_str('my_tmpl' => $template, {css_class => 'cinput',
@@ -57,7 +58,8 @@ my $output =
 '<input type="text" name="test_field" id="abc1" 
      size="40" 
      maxlength="50"
-    value="my_test">';
+    value="my_test">
+';
 is( $out, $output, 'output matches' );
 
 

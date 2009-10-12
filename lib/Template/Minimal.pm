@@ -44,8 +44,8 @@ but only implementing a very small subset of TT's syntax.
 
 our $TMPL_CODE_START = <<'END';
 sub {
-    my ($stash) = @_;
-    my $out;
+  my ($stash) = @_;
+  my $out;
 END
 
 our $TMPL_CODE_END = <<'END';
@@ -88,6 +88,7 @@ my $tmpl_ident = qr{
 my $tmpl_foreach = qr{ FOREACH \s+ ($tmpl_ident) \s+ IN \s+ ($tmpl_ident) }x;
 my $tmpl_if = qr{ IF \s+ ($tmpl_ident) }x;
 my $tmpl_include = qr{ INCLUDE \s+ ["']? ([^"']+) ["']?  }x;
+my $tmpl_newline = qr{ NEWLINE }x;
 my $tmpl_vars = qr{ (?: \s* \| \s* )?  ( $tmpl_ident ) }x;
 my $tmpl_directive = qr{
     $START
@@ -96,16 +97,17 @@ my $tmpl_directive = qr{
             | $tmpl_foreach
             | $tmpl_if
             | $tmpl_include
+            | $tmpl_newline
             | [a-z0-9_\.\s\|]+
         )
         \s*?
     $END
 }x;
 
-sub parse_tmpl {
-    my ( $self, $tpl ) = @_;
-$DB::single=1;
-    my (@chunks) = grep { defined $_ && $_ } ( $tpl =~ m{$tmpl_chunks}g );
+sub parse {
+    my ( $self, $tmpl ) = @_;
+
+    my (@chunks) = $self->get_chunks($tmpl); 
     my @AST;
     while ( my $chunk = shift @chunks ) {
         if ( my ($tdir) = $chunk =~ $tmpl_directive ) {
@@ -124,6 +126,9 @@ $DB::single=1;
             elsif ( $tdir =~ m{END} ) {
                 push @AST, ['END'];
             }
+            elsif ( $tdir =~ m{NEWLINE} ) {
+                push @AST, [ NEWLINE => 1 ];
+            }
             elsif ( my (@items) = $tdir =~ m{$tmpl_vars}g ) {
                 push @AST, [ VARS => [@items] ];
             }
@@ -135,12 +140,32 @@ $DB::single=1;
     return [@AST];
 }
 
-sub _optimize_tmpl {
+sub get_chunks {
+    my ( $self, $tmpl ) = @_;
+
+    $tmpl =~ s/\n/[% NEWLINE %]/g;
+    my (@chunks) = grep { defined $_ && $_ } ( $tmpl =~ m{$tmpl_chunks}g );
+    return @chunks;
+}
+
+sub _optimize {
     my ( undef, $AST ) = @_;
 
     my @OPT;
     while ( my $item = shift @$AST ) {
         my ( $type, $val ) = @$item;
+        if( $type eq 'TEXT' ) {
+            if ( $AST->[0]->[0] eq 'NEWLINE' ) {
+                $item->[1] = $item->[1] . "\n";
+                shift @$AST;
+            }
+        }
+        elsif ( $type eq 'NEWLINE' ) {
+            if ( $AST->[0] && $AST->[0]->[0] eq 'TEXT' ) {
+                $AST->[0]->[1] = "\n" . $AST->[0]->[1];
+                next;
+            }
+        }
         if ( $type eq 'TEXT' || $type eq 'VARS' ) {
             my @long = ($item);
             # lets see what the next statement is to see if we can concat
@@ -154,11 +179,6 @@ sub _optimize_tmpl {
             }
             push @OPT, @long;
         }
-        elsif ( $type eq 'FOREACH' ) {
-$DB::single=1;
-            my @long = ($item);
-            push @OPT, $item;
-        }
         else {
             push @OPT, $item;
         }
@@ -166,12 +186,12 @@ $DB::single=1;
     return [@OPT];
 }
 
-sub compile_tmpl {
+sub compile {
     my ( $self, $AST ) = @_;
 
-    my $current_level = 0;
+    my $depth = 0;
     my $code = '';
-    if ( !$current_level ) {
+    if ( !$depth ) {
         $code .= $TMPL_CODE_START;
     }
     my @names = ( 'a' .. 'z' );
@@ -181,6 +201,9 @@ sub compile_tmpl {
             $val =~ s{'}{\\'};
             $code .= q{  $out .= '} . $val . qq{';\n};
         }
+        elsif ( $type eq 'NEWLINE' ) {
+            $code .= q{  $out .= "\n"} . qq{;\n};
+        }
         elsif ( $type eq 'VARS' ) {
             $code .=
                 q{  $out .= $stash->get(} .
@@ -188,17 +211,17 @@ sub compile_tmpl {
         }
         elsif ( $type eq 'END' ) {
             $code .= "  }\n";
-            $current_level--;
+            $depth--;
         }
         elsif ( $type eq 'FOREACH' ) {
-            $current_level++;
+            $depth++;
             my $each = $val->[0];
             my $array = $val->[1];
             $code .= "  foreach my \$$each ( \@{\$stash\->get('$array')} ) {\n";
             $code .= "    \$stash->set_var('$each', \$$each);\n";
         }
         elsif ( $type eq 'IF' ) {
-           $current_level++;
+           $depth++;
            $code .= " if ( \$stash->get('$val') ) {\n";
         }
         elsif ( $type eq 'CONCAT' ) {
@@ -231,7 +254,7 @@ sub compile_tmpl {
             die "Could not understand type '$type'";
         }
     }
-    if ( !$current_level ) {
+    if ( !$depth ) {
         $code .= $TMPL_CODE_END;
     }
     return $code;
@@ -239,9 +262,9 @@ sub compile_tmpl {
 
 sub add_template {
     my ( $self, $tmpl_name, $tmpl_str ) = @_;
-    my $AST = $self->parse_tmpl($tmpl_str);
-    $AST = $self->_optimize_tmpl($AST);
-    my $code_str = $self->compile_tmpl($AST);
+    my $AST = $self->parse($tmpl_str);
+    $AST = $self->_optimize($AST);
+    my $code_str = $self->compile($AST);
     my $coderef = eval($code_str) or die "Could not compile template: $@";
     $self->_set_template( $tmpl_name, $coderef );
 }
@@ -280,23 +303,23 @@ sub process_file {
 }
 
 sub _get_tmpl_str {
-    my ( $self, $tpl ) = @_;
+    my ( $self, $tmpl ) = @_;
 
-    my $tpl_str     = '';
+    my $tmpl_str     = '';
     my @dirs_to_try = @{ $self->include_path };
     my $file;
     while ( my $dir = shift @dirs_to_try ) {
-        my $tmp = $dir . '/' . $tpl;
+        my $tmp = $dir . '/' . $tmpl;
         if ( -e $tmp ) {
             $file = $tmp;
             last;
         }
     }
-    die "Could not find $tpl" if ( !$file );
+    die "Could not find $tmpl" if ( !$file );
     open my $fh, $file or die "Could not open '$file': $!";
-    $tpl_str .= do { local $/; <$fh>; };
+    $tmpl_str .= do { local $/; <$fh>; };
     close $fh or die "Could not close '$file': $!";
-    return $tpl_str;
+    return $tmpl_str;
 }
 
 sub quote_lists {
