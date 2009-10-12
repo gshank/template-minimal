@@ -3,6 +3,10 @@ package Template::Minimal;
 use Moose;
 use aliased 'Template::Minimal::Stash';
 
+use 5.008;
+
+our $VERSION = '0.01';
+
 =head1 NAME
 
 Template::Minimal - minimal, lightweight templates
