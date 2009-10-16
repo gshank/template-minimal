@@ -6,9 +6,21 @@ use Test::Deep;
 
 use Template::Minimal;
 
-my $tt = Template::Minimal->new;
+my $tm = Template::Minimal->new;
 
-my $tpl = 'The quick brown fox [% name | escape_html %]
+# concat variables
+my $template = "[% foo %][% bar %]";
+my $got = $tm->parse($template);
+my $optimized = $tm->_optimize($got);
+my $code_str = $tm->compile($optimized);
+
+$template = "[% ref.foo %]";
+my $vars = { ref => { foo => 'bar' } };
+my $output = $tm->process_string($template, $vars);
+is( $output, "bar", 'output ok');
+
+
+$template = 'The quick brown fox [% name | escape_html %]
 [% FOREACH foo IN foos %][% foo.hehe %][% END %]';
 
 my $ast = [
@@ -20,9 +32,9 @@ my $ast = [
     ['END'],
 ];
 
-my $got = $tt->parse($tpl);
+$got = $tm->parse($template);
 cmp_deeply($got, $ast, 'parsed template');
-my $optimized = $tt->_optimize($got);
+$optimized = $tm->_optimize($got);
 
 
 

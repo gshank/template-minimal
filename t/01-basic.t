@@ -7,9 +7,9 @@ use Test::Differences;
 use_ok('Template::Minimal');
 use aliased 'Template::Minimal::Stash';
 
-my $tt = Template::Minimal->new();
+my $tm = Template::Minimal->new();
 
-my $compiled = $tt->compile(
+my $compiled = $tm->compile(
     [[ TEXT => 'Hello, world!' ]],
 );
 my $expected = 
@@ -25,7 +25,7 @@ ok( $coderef, 'text evals ok');
 my $out = $coderef->();
 is( $out, "Hello, world!", 'text executes ok');
 
-$compiled = $tt->compile(
+$compiled = $tm->compile(
     [[ TEXT => 'Newline' ], [ NEWLINE => 1 ]],
 );
 $expected =
@@ -42,7 +42,7 @@ ok( $coderef, 'newline evals ok');
 $out = $coderef->();
 is($out, "Newline\n", 'newline executes ok');
 
-$compiled = $tt->compile(
+$compiled = $tm->compile(
     [[ VARS => ['George'] ]],
 );
 $expected =
@@ -54,7 +54,7 @@ $expected =
 ';
 is( $compiled, $expected, 'variable compiles');
 
-$compiled = $tt->compile(
+$compiled = $tm->compile(
     [[ FOREACH => ['blog', "blogs" ]], [ 'END' ]],
 );
 
@@ -70,8 +70,9 @@ $expected =
 
 is( $compiled, $expected, 'foreach compiles');
 
-$tt = Template::Minimal->new();
+$tm = Template::Minimal->new();
 
+my $concat = $tm->parse("[% foo %][% bar %]" );
 parse_check('[% name %]', [[ VARS => ['name'] ]], 'variable parses');
 
 parse_check(
@@ -100,15 +101,14 @@ parse_check(
 
 sub parse_check {
     my ($tpl, $ast, $cmt) = @_;
-    my $got = $tt->parse($tpl);
+    my $got = $tm->parse($tpl);
     cmp_deeply($got, $ast, $cmt);
 }
 
-
 basic: {
     my $stash = Stash->new({ name => 'Perl Hacker', title => 'paper', });
-    my $tt = Template::Minimal->new({ include_path => ['t/tmpl'], });
-    my $out = $tt->process_file('foo.tpl', $stash);
+    my $tm = Template::Minimal->new({ include_path => ['t/tmpl'], });
+    my $out = $tm->process_file('foo.tpl', $stash);
     my $expected = <<'END';
 
 Hi Perl Hacker,
@@ -125,10 +125,10 @@ gigo: {
     my $stash = Stash->new({
         name => 'Perl Hacker',
     });
-    my $tt = Template::Minimal->new({
+    my $tm = Template::Minimal->new({
         include_path => ['t/tmpl'],
     });
-    my $out = $tt->process_file('horror.tpl', $stash);
+    my $out = $tm->process_file('horror.tpl', $stash);
     my $expected = <<'END';
 
 ~`@#$%^&*()-_=+{[]}\|;:"'<,.>?/

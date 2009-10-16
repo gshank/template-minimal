@@ -8,14 +8,14 @@ use_ok('Template::Minimal');
 use aliased 'Template::Minimal::Stash';
 
 # template strings
-my $tt = Template::Minimal->new;
+my $tm = Template::Minimal->new;
 
 my $template = <<END;
 <div class="[% css_class %]">
 <input type="text">[% fif %]</input>
 END
 
-my $out = $tt->process_str('input' => $template, Stash->new({css_class => 'cinput',
+my $out = $tm->process_str('input' => $template, Stash->new({css_class => 'cinput',
             fif => 'Testing'}));
 ok( $out, 'processed string template' );
 my $processed = '<div class="cinput">
@@ -23,7 +23,7 @@ my $processed = '<div class="cinput">
 ';
 is( $out, $processed, 'output ok');
 
-$out = $tt->process_str('my_tmpl' => $template, {css_class => 'cinput',
+$out = $tm->process_str('my_tmpl' => $template, {css_class => 'cinput',
              fif => 'Testing'});
 is( $out, $processed, 'output ok');
 
@@ -32,9 +32,9 @@ TEST: [% some_var %] [% IF reason %]reason="[% reason %]"[% END %]
 stop test
 END
 
-$tt->add_template('test_if', $template);
-ok( $tt->_has_template('test_if'), 'template has been added' );
-$out = $tt->process( 'test_if', { some_var => "Here it is" } );
+$tm->add_template('test_if', $template);
+ok( $tm->_has_template('test_if'), 'template has been added' );
+$out = $tm->process( 'test_if', { some_var => "Here it is" } );
 ok( $out, 'got output' );
 
 my $widget = <<'END';
@@ -44,9 +44,9 @@ my $widget = <<'END';
     value="[% fif %]">
 END
 
-$tt->add_template('widget', $widget);
-ok( $tt->_has_template('widget'), 'widget template added' );
-$out = $tt->process('widget', {
+$tm->add_template('widget', $widget);
+ok( $tm->_has_template('widget'), 'widget template added' );
+$out = $tm->process('widget', {
         html_name => 'test_field',
         id => 'abc1',
         size => 40,

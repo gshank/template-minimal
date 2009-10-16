@@ -159,7 +159,7 @@ sub _optimize {
     while ( my $item = shift @$AST ) {
         my ( $type, $val ) = @$item;
         if( $type eq 'TEXT' ) {
-            if ( $AST->[0]->[0] eq 'NEWLINE' ) {
+            if ( $AST->[0] && $AST->[0]->[0] eq 'NEWLINE' ) {
                 $item->[1] = $item->[1] . "\n";
                 shift @$AST;
             }
@@ -229,16 +229,16 @@ sub compile {
            $code .= " if ( \$stash->get('$val') ) {\n";
         }
         elsif ( $type eq 'CONCAT' ) {
-            my ( $t, $v ) = @{ shift @$val };
-            if ( $t eq 'TEXT' ) {
-                $v =~ s{'}{\\'};
-                $code .= q{  $out .=  '} . $v . qq{'\n};
-            }
-            elsif ( $t eq 'VARS' ) {
-                $code .=
-                    q{  $out .= $stash->get(} .
-                    quote_lists(@$val) . qq{)};
-            }
+           my ( $t, $v ) = @{ shift @$val };
+           if ( $t eq 'TEXT' ) {
+               $v =~ s{'}{\\'};
+               $code .= q{  $out .=  '} . $v . qq{'\n};
+           }
+           elsif ( $t eq 'VARS' ) {
+               $code .=
+                   q{  $out .= $stash->get(qw(} .
+                    join( ' ', @$v ) . qq{))};
+           }
             for my $concat (@$val) {
                 my ( $ct, $cv ) = @$concat;
 
@@ -281,6 +281,19 @@ sub process_str {
         $compiled_tmpl = $self->add_template($tmpl_name, $tmpl_str );
     }
     return $self->process( $tmpl_name, $stash );
+}
+
+sub process_string {
+    my ( $self, $tmpl_str, $stash ) = @_;
+    my $AST = $self->parse($tmpl_str);
+    $AST = $self->_optimize($AST);
+    my $code_str = $self->compile($AST);
+    my $coderef = eval($code_str) or die "Could not compile template: $@";
+    if( ref $stash eq 'HASH' ) {
+       $stash = Stash->new($stash);
+    } 
+    my $out = $coderef->($stash);
+    return $out;
 }
 
 sub process {

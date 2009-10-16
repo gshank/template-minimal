@@ -6,15 +6,15 @@ use Test::Differences;
 use Template::Minimal;
 use aliased 'Template::Minimal::Stash';
 
-my $tt = Template::Minimal->new;
+my $tm = Template::Minimal->new;
 my $template = "Testing....
 [% FOREACH tag IN tags %]
 [% tag %]
 [% END %]
 ";
-my $ast = $tt->parse($template);
+my $ast = $tm->parse($template);
 ok( $ast, 'parsed template' );
-my $compiled = $tt->compile($ast);
+my $compiled = $tm->compile($ast);
 my $expected = <<'END';
 sub {
   my ($stash) = @_;
@@ -62,10 +62,10 @@ $stash = Stash->new({
     items => ['Ginger', 'The Skipper'],
     possible_geek => 1,
 });
-$tt = Template::Minimal->new({
+$tm = Template::Minimal->new({
     include_path => ['t/tmpl'],
 });
-$out = $tt->process_file('nested.tpl', $stash );
+$out = $tm->process_file('nested.tpl', $stash );
 $expected = <<'END';
 <html>
   <head><title>Howdy Gilligan</title></head>

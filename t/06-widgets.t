@@ -17,9 +17,9 @@ END
     has 'template' => ( is => 'ro', isa => 'Template::Minimal', builder => 'build_template');
     sub build_template {
         my $self = shift;
-        my $tt = Template::Minimal->new;
-        $tt->add_template('text_widget', $widget );
-        return $tt;
+        my $tm = Template::Minimal->new;
+        $tm->add_template('text_widget', $widget );
+        return $tm;
     }
 
     sub render {

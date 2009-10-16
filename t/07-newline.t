@@ -8,9 +8,9 @@ use Test::Differences;
 use_ok('Template::Minimal');
 use aliased 'Template::Minimal::Stash';
 
-my $tt = Template::Minimal->new();
+my $tm = Template::Minimal->new();
 
-my $compiled = $tt->compile(
+my $compiled = $tm->compile(
     [[ TEXT => 'Newline' ], [ NEWLINE => 1 ]],
 );
 my $expected =
@@ -33,9 +33,9 @@ another line
 last line [% done %]
 ";
 
-my $ast = $tt->parse($template);
+my $ast = $tm->parse($template);
 
 ok( $ast, 'parsed ok');
-my $optimized = $tt->_optimize($ast);
+my $optimized = $tm->_optimize($ast);
 
 done_testing;
