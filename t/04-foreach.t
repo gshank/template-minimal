@@ -28,10 +28,11 @@ sub {
   $out .= "\n";
   }
   $out .= "\n";
+  return $out;
 }
 END
 
-is( $compiled, $expected,  'compiled template');
+eq_or_diff( $compiled, $expected,  'compiled template');
 my $stash = Stash->new({ tags => ['Perl', 'programming', 'MVC'] } );
 my $coderef = eval( $compiled );
 ok( $coderef, 'got coderef' );
@@ -88,6 +89,16 @@ $expected = <<'END';
 END
 
 eq_or_diff( $out, $expected, 'More complex example' );
+
+$template = 'Args: [% FOREACH arg IN args_a %][% arg %] [% END %]';
+$ast = $tm->parse($template);
+my $optimized = $tm->_optimize($ast);
+my $code_str = $tm->compile($optimized);
+$stash = Stash->new({ args_a => ['one', 'two', 'three'] } );
+$coderef = eval( $code_str );
+ok( $coderef, 'got coderef' );
+$out = $coderef->($stash);
+is( $out, 'Args: one two three ', 'got output from coderef');
 
 done_testing;
 

@@ -17,6 +17,7 @@ my $expected =
   my ($stash) = @_;
   my $out;
   $out .= \'Hello, world!\';
+  return $out;
 }
 ';
 is( $compiled, $expected, 'text compiles' );
@@ -34,6 +35,7 @@ $expected =
   my $out;
   $out .= \'Newline\';
   $out .= "\n";
+  return $out;
 }
 ';
 is( $compiled, $expected, 'newline compiles' );
@@ -50,6 +52,7 @@ $expected =
   my ($stash) = @_;
   my $out;
   $out .= $stash->get(\'George\');
+  return $out;
 }
 ';
 is( $compiled, $expected, 'variable compiles');
@@ -65,6 +68,7 @@ $expected =
   foreach my $blog ( @{$stash->get(\'blogs\')} ) {
     $stash->set_var(\'blog\', $blog);
   }
+  return $out;
 }
 ';
 

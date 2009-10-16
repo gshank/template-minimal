@@ -5,8 +5,10 @@ use Test::More;
 use Test::Deep;
 
 use Template::Minimal;
+use aliased 'Template::Minimal::Stash';
 
 my $tm = Template::Minimal->new;
+
 
 # concat variables
 my $template = "[% foo %][% bar %]";

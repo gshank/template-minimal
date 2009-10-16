@@ -1,13 +1,32 @@
-package Template::Minimal::String;
-use strict;
-use warnings;
+package Template::Minimal::Trait::String;
 
+use Moose::Role;
+
+use Template::Minimal;
 use PadWalker ('peek_my');
 use Carp ('confess');
 use List::Util ('min');
-use Sub::Exporter -setup => {
-    exports => ['tm', 'strip'],
-};
+
+
+has 'templates' => (
+    is => 'ro',
+    isa => 'Template::Minimal',
+    builder => '_build_templates',
+    handles => {
+       has_template => 'has_template',
+       add_template => 'add_template',
+       tmpl         => 'process',
+    }
+);
+sub _build_templates {
+    my $self = shift;
+    return Template::Minimal->new( $self->tm_args );
+}
+has 'tm_args' => (
+    is => 'ro',
+    isa => 'HashRef',
+    default => sub {{}},
+);
 
 our $VERSION   = '0.01';
 
@@ -28,8 +47,7 @@ my %SIGIL_MAP = (
 
 sub tm($) {
     my $template = shift;
-    confess 'Whoa there, I need a template' if !defined $template;
-
+    confess 'template required' if !defined $template;
     my %vars = %{peek_my(1)||{}};
     my %transformed_vars;
     for my $v (keys %vars){
@@ -49,11 +67,31 @@ sub tm($) {
             $transformed_vars{$varname} = $transformed_vars{$v};
         }
     }
-
     my $t = _build_tm_engine;
-    my $output;
-    $output = $t->process_string($template, \%transformed_vars );
-    return $output;
+    return $t->process_string($template, \%transformed_vars );
+}
+
+sub vars {
+    my %vars = %{peek_my(1)||{}};
+    my %transformed_vars;
+    for my $v (keys %vars){
+        my ($sigil, $varname) = ($v =~ /^(.)(.+)$/);
+        my $suffix = $SIGIL_MAP{$sigil};
+        my $name = join '_', $varname, $suffix;
+        $transformed_vars{$name} = $vars{$v};
+        if($sigil eq '$'){
+            $transformed_vars{$name} = ${$transformed_vars{$name}};
+        }
+    }
+
+    # add the plain scalar variables (without overwriting anything)
+    for my $v (grep { /_s$/ } keys %transformed_vars) {
+        my ($varname) = ($v =~ /^(.+)_s$/);
+        if(!exists $transformed_vars{$varname}){
+            $transformed_vars{$varname} = $transformed_vars{$v};
+        }
+    }
+    return \%transformed_vars;
 }
 
 sub strip($){
@@ -84,11 +122,16 @@ __END__
 
 =head1 NAME
 
-Template::Minimal::String - use TM to interpolate lexical variables
+Template::Minimal::Trait::String - use TM to interpolate lexical variables
 
 =head1 SYNOPSIS
 
-  use Template::Minimal::String ('tm', 'strip');
+  with 'Template::Minimal::Trait::String';
+
+  sub BUILD {
+     my $self = shift;
+     $self->add_template('args', 'Args: [% FOREACH arg IN ARGS %][% arg %] [% END %]');
+  }
 
   sub foo {
      my $self = shift;
@@ -96,9 +139,9 @@ Template::Minimal::String - use TM to interpolate lexical variables
   }
 
   sub bar {
+     my $self = shift;
      my @args = @_;
-     return strip( tt( 'Args: [% args_a.join(",") %]' ) );
-     }
+     return $self->tmpl('args', vars()); 
   }
 
 =head1 DESCRIPTION

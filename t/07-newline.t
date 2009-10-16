@@ -19,6 +19,7 @@ my $expected =
   my $out;
   $out .= \'Newline\';
   $out .= "\n";
+  return $out;
 }
 ';
 is( $compiled, $expected, 'newline compiles' );

@@ -33,7 +33,7 @@ stop test
 END
 
 $tm->add_template('test_if', $template);
-ok( $tm->_has_template('test_if'), 'template has been added' );
+ok( $tm->has_template('test_if'), 'template has been added' );
 $out = $tm->process( 'test_if', { some_var => "Here it is" } );
 ok( $out, 'got output' );
 
@@ -45,7 +45,7 @@ my $widget = <<'END';
 END
 
 $tm->add_template('widget', $widget);
-ok( $tm->_has_template('widget'), 'widget template added' );
+ok( $tm->has_template('widget'), 'widget template added' );
 $out = $tm->process('widget', {
         html_name => 'test_field',
         id => 'abc1',

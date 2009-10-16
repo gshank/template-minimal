@@ -53,6 +53,7 @@ sub {
 END
 
 our $TMPL_CODE_END = <<'END';
+  return $out;
 }
 END
 
@@ -72,7 +73,7 @@ has '_templates' => (
     handles => {
        _set_template => 'set',
        _get_template => 'get',
-       _has_template => 'exists',
+       has_template => 'exists',
     }
 );
 
@@ -298,7 +299,7 @@ sub process_string {
 
 sub process {
     my ( $self, $tmpl_name, $stash ) = @_;
-    die "Template does not exist" unless $self->_has_template( $tmpl_name );
+    die "Template does not exist" unless $self->has_template( $tmpl_name );
     my $compiled_tmpl = $self->_get_template($tmpl_name );
     if( ref $stash eq 'HASH' ) {
        $stash = Stash->new($stash);
@@ -310,7 +311,7 @@ sub process {
 
 sub process_file {
    my ( $self, $tmpl_file, $stash ) = @_;
-   if( $self->_has_template( $tmpl_file ) ) {
+   if( $self->has_template( $tmpl_file ) ) {
        return $self->process( $tmpl_file, $stash );
    }
    else {

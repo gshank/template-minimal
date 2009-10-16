@@ -17,6 +17,7 @@ is( e(), 'array foo_a', 'nothing overwritten' );
 
 is( f(), "Foo maps to bar!\n", 'references and strip work' );
 
+my $utf8string = utf_eight();
 is( utf_eight(), "ほげぼげ", 'utf8 works' );
 is( length utf_eight(), 4, 'utf8 works not by coincidence' );
 
