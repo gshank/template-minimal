@@ -1,6 +1,7 @@
 package Template::Minimal;
 
 use Moose;
+use Try::Tiny;
 use aliased 'Template::Minimal::Stash';
 
 use 5.008;
@@ -204,7 +205,7 @@ sub compile {
     while ( my $item = shift @$AST ) {
         my ( $type, $val ) = @$item;
         if ( $type eq 'TEXT' ) {
-            $val =~ s{'}{\\'};
+            $val =~ s{'}{\\'}g;
             $code .= q{  $out .= '} . $val . qq{';\n};
         }
         elsif ( $type eq 'NEWLINE' ) {
@@ -274,7 +275,7 @@ sub add_template {
     my $AST = $self->parse($tmpl_str);
     $AST = $self->_optimize($AST);
     my $code_str = $self->compile($AST);
-    my $coderef = eval($code_str) or die "Could not compile template: $@";
+    my $coderef = eval($code_str) or die "Could not compile template $tmpl_name: $@";
     $self->_set_template( $tmpl_name, $coderef );
 }
 
@@ -283,7 +284,12 @@ sub process_str {
 
     my $compiled_tmpl;
     unless ( $compiled_tmpl = $self->_get_template($tmpl_name) ) {
-        $compiled_tmpl = $self->add_template($tmpl_name, $tmpl_str );
+        try {
+            $compiled_tmpl = $self->add_template($tmpl_name, $tmpl_str );
+        }
+        catch {
+            warn "Could not add template $tmpl_name";
+        };
     }
     return $self->process( $tmpl_name, $stash );
 }

@@ -12,8 +12,8 @@ my $tm = Template::Minimal->new;
 
 # concat variables
 my $template = "[% foo %][% bar %]";
-my $got = $tm->parse($template);
-my $optimized = $tm->_optimize($got);
+my $ast = $tm->parse($template);
+my $optimized = $tm->_optimize($ast);
 my $code_str = $tm->compile($optimized);
 
 $template = "[% ref.foo %]";
@@ -21,11 +21,21 @@ my $vars = { ref => { foo => 'bar' } };
 my $output = $tm->process_string($template, $vars);
 is( $output, "bar", 'output ok');
 
+$template = "This is not a very 'fair' outcome";
+$ast = $tm->parse($template);
+$optimized = $tm->_optimize($ast);
+$code_str = $tm->compile($optimized);
+ok( $code_str, 'compiled' );
+my $code_ref = eval($code_str);
+ok( $code_ref, 'got coderef' );
+$output = $code_ref->();
+ok( $output, 'got output' );
+
 
 $template = 'The quick brown fox [% name | escape_html %]
 [% FOREACH foo IN foos %][% foo.hehe %][% END %]';
 
-my $ast = [
+my $expected = [
     [TEXT => 'The quick brown fox '],
     [VARS => ['name', 'escape_html']],
     [NEWLINE => 1],
@@ -34,9 +44,9 @@ my $ast = [
     ['END'],
 ];
 
-$got = $tm->parse($template);
-cmp_deeply($got, $ast, 'parsed template');
-$optimized = $tm->_optimize($got);
+$ast = $tm->parse($template);
+cmp_deeply($ast, $expected, 'parsed template');
+$optimized = $tm->_optimize($ast);
 
 
 
