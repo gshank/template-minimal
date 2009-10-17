@@ -8,6 +8,7 @@ snippet 'main' => ( template => '
       <header>
       </header>
       <body>
+      <h1>[% page_title %]</h1>
       [% INCLUDE content %]
       </body>
     </html>' );
@@ -30,6 +31,6 @@ snippet 'sectionA' => ( template => '
     </p>' );
 
 snippet 'sectionB' => ( template => '
-    <h3>Hello, World!</h3>' );
+    <h3>Hello, [% name %]!</h3>' );
 
 1;

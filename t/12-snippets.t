@@ -12,7 +12,8 @@ use lib ('t/lib');
 
     sub render {
         my $self = shift;
-        return $self->tmpl('main');
+        return $self->tmpl('main', { page_title => 'Testing Snippets',
+            name => 'Gerda'} );
     }
 }
 
@@ -23,6 +24,7 @@ my $expected = '
       <header>
       </header>
       <body>
+      <h1>Testing Snippets</h1>
       
     <div class="page">
     <h2>This is a test of template snippets</h2>
@@ -35,7 +37,7 @@ my $expected = '
        conceived and so dedicated can long endure.
     </p>
         
-    <h3>Hello, World!</h3>
+    <h3>Hello, Gerda!</h3>
       </div>
     </div>
       </body>
