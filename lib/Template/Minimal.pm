@@ -48,7 +48,7 @@ but only implementing a very small subset of TT's syntax.
 
 our $TMPL_CODE_START = <<'END';
 sub {
-  my ($stash) = @_;
+  my ($ctx, $stash) = @_;
   my $out;
 END
 
@@ -126,6 +126,7 @@ sub parse {
             }
             elsif ( my ($inc_name) = $tdir =~ $tmpl_include ) {
                 $inc_name =~ s/['"]//g;
+                $inc_name =~ s/\s+$//g;
                 push @AST, [ INCLUDE => $inc_name ];
             }
             elsif ( $tdir =~ m{END} ) {
@@ -255,6 +256,9 @@ sub compile {
             }
             $code .= ";\n";
         }
+        elsif ( $type eq 'INCLUDE' ) {
+            $code .= q{  $out .= $ctx->do_include('} . $val . q{', $stash);} . qq{\n};
+        }
         else {
             die "Could not understand type '$type'";
         }
@@ -293,7 +297,7 @@ sub process_string {
     if( ref $stash eq 'HASH' ) {
        $stash = Stash->new($stash);
     } 
-    my $out = $coderef->($stash);
+    my $out = $coderef->($self, $stash);
     return $out;
 }
 
@@ -304,7 +308,7 @@ sub process {
     if( ref $stash eq 'HASH' ) {
        $stash = Stash->new($stash);
     } 
-    my $out = $compiled_tmpl->($stash);
+    my $out = $compiled_tmpl->($self, $stash);
     return $out;
 }
 
@@ -318,6 +322,11 @@ sub process_file {
        my $tmpl_str = $self->_get_tmpl_str( $tmpl_file );
        return $self->process_str( $tmpl_file, $tmpl_str, $stash );
    }
+}
+
+sub do_include {
+    my ( $self, $tmpl_name, $stash ) = @_;
+    return $self->process($tmpl_name, $stash);
 }
 
 sub _get_tmpl_str {

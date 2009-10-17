@@ -14,7 +14,7 @@ my $compiled = $tm->compile(
 );
 my $expected = 
 'sub {
-  my ($stash) = @_;
+  my ($ctx, $stash) = @_;
   my $out;
   $out .= \'Hello, world!\';
   return $out;
@@ -31,7 +31,7 @@ $compiled = $tm->compile(
 );
 $expected =
 'sub {
-  my ($stash) = @_;
+  my ($ctx, $stash) = @_;
   my $out;
   $out .= \'Newline\';
   $out .= "\n";
@@ -49,7 +49,7 @@ $compiled = $tm->compile(
 );
 $expected =
 'sub {
-  my ($stash) = @_;
+  my ($ctx, $stash) = @_;
   my $out;
   $out .= $stash->get(\'George\');
   return $out;
@@ -63,7 +63,7 @@ $compiled = $tm->compile(
 
 $expected = 
 'sub {
-  my ($stash) = @_;
+  my ($ctx, $stash) = @_;
   my $out;
   foreach my $blog ( @{$stash->get(\'blogs\')} ) {
     $stash->set_var(\'blog\', $blog);

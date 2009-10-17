@@ -17,7 +17,7 @@ ok( $ast, 'parsed template' );
 my $compiled = $tm->compile($ast);
 my $expected = <<'END';
 sub {
-  my ($stash) = @_;
+  my ($ctx, $stash) = @_;
   my $out;
   $out .= 'Testing....';
   $out .= "\n";
@@ -36,7 +36,7 @@ eq_or_diff( $compiled, $expected,  'compiled template');
 my $stash = Stash->new({ tags => ['Perl', 'programming', 'MVC'] } );
 my $coderef = eval( $compiled );
 ok( $coderef, 'got coderef' );
-my $out = $coderef->($stash);
+my $out = $coderef->($tm, $stash);
 ok( $out, 'got output from coderef');
 
 is( $out, testx($stash), 'same output');
@@ -97,7 +97,7 @@ my $code_str = $tm->compile($optimized);
 $stash = Stash->new({ args_a => ['one', 'two', 'three'] } );
 $coderef = eval( $code_str );
 ok( $coderef, 'got coderef' );
-$out = $coderef->($stash);
+$out = $coderef->($tm, $stash);
 is( $out, 'Args: one two three ', 'got output from coderef');
 
 done_testing;

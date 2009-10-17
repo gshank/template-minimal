@@ -15,7 +15,7 @@ my $compiled = $tm->compile(
 );
 my $expected =
 'sub {
-  my ($stash) = @_;
+  my ($ctx, $stash) = @_;
   my $out;
   $out .= \'Newline\';
   $out .= "\n";
