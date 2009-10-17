@@ -21,14 +21,27 @@ my $vars = { ref => { foo => 'bar' } };
 my $output = $tm->process_string($template, $vars);
 is( $output, "bar", 'output ok');
 
-$template = "This is not a very 'fair' outcome";
+$template = "This is not a very 'fair' outcome.
+[% testing %]";
 $ast = $tm->parse($template);
 $optimized = $tm->_optimize($ast);
 $code_str = $tm->compile($optimized);
 ok( $code_str, 'compiled' );
 my $code_ref = eval($code_str);
 ok( $code_ref, 'got coderef' );
-$output = $code_ref->();
+my $stash = Stash->new( {testing => 'Yes'});
+$output = $code_ref->($tm, $stash);
+ok( $output, 'got output' );
+
+$template = 'This is not a very \'fair\' outcome.
+[% testing %] [% INCLUDE something %]';
+$ast = $tm->parse($template);
+$optimized = $tm->_optimize($ast);
+$code_str = $tm->compile($optimized);
+ok( $code_str, 'compiled' );
+$code_ref = eval($code_str);
+ok( $code_ref, 'got coderef' );
+$output = $code_ref->($tm, $stash);
 ok( $output, 'got output' );
 
 

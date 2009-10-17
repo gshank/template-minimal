@@ -234,7 +234,7 @@ sub compile {
         elsif ( $type eq 'CONCAT' ) {
            my ( $t, $v ) = @{ shift @$val };
            if ( $t eq 'TEXT' ) {
-               $v =~ s{'}{\\'};
+               $v =~ s{'}{\\'}g;
                $code .= q{  $out .=  '} . $v . qq{'\n};
            }
            elsif ( $t eq 'VARS' ) {
@@ -332,7 +332,8 @@ sub process_file {
 
 sub do_include {
     my ( $self, $tmpl_name, $stash ) = @_;
-    return $self->process($tmpl_name, $stash);
+    return $self->process($tmpl_name, $stash) if $self->has_template($tmpl_name);
+    return '';
 }
 
 sub _get_tmpl_str {
