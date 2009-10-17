@@ -246,7 +246,7 @@ sub compile {
                 my ( $ct, $cv ) = @$concat;
 
                 if ( $ct eq 'TEXT' ) {
-                    $cv =~ s{'}{\\'};
+                    $cv =~ s{'}{\\'}g;
                     $code .= qq{\n    . '} . $cv . q{'};
                 }
                 elsif ( $ct eq 'VARS' ) {
