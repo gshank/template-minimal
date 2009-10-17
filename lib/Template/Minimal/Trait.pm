@@ -1,4 +1,4 @@
-package Template::Minimal::Trait::String;
+package Template::Minimal::Trait;
 
 use Moose::Role;
 
@@ -6,7 +6,6 @@ use Template::Minimal;
 use PadWalker ('peek_my');
 use Carp ('confess');
 use List::Util ('min');
-
 
 has 'templates' => (
     is => 'ro',
@@ -18,10 +17,27 @@ has 'templates' => (
        tmpl         => 'process',
     }
 );
+has '_template_strings' => (
+    is => 'ro',
+    isa => 'HashRef',
+    traits => ['Hash'],
+    lazy => 1,
+    builder => '_build_template_strings',
+    handles => {
+       _add_tmpl_string => 'set',
+       _get_tmpl_string => 'get',
+    }
+);
+
 sub _build_templates {
     my $self = shift;
-    return Template::Minimal->new( $self->tm_args );
+    my $tm = Template::Minimal->new( $self->tm_args );
+    foreach my $tmpl ( keys %{$self->_template_strings} ) {
+        $tm->add_template( $tmpl, $self->_get_tmpl_string($tmpl) );
+    }
+    return $tm;
 }
+
 has 'tm_args' => (
     is => 'ro',
     isa => 'HashRef',
@@ -92,6 +108,31 @@ sub vars {
         }
     }
     return \%transformed_vars;
+}
+
+sub _build_template_strings {
+    my $self = shift;
+    my @field_list;
+
+    my $templates = {};
+    foreach my $sc ( reverse $self->meta->linearized_isa ) {
+        my $meta = $sc->meta;
+        if ( $meta->can('calculate_all_roles') ) {
+            foreach my $role ( reverse $meta->calculate_all_roles ) {
+                if ( $role->can('templates') && $role->has_templates ) {
+                    while ( my ($tmpl, $val) = each %{$role->templates} ) {
+                        $templates->{$tmpl} = $val->{string};
+                    }
+                }
+            }
+        }
+        if ( $meta->can('templates') && $meta->has_templates ) {
+            while ( my ($tmpl, $val)  = each %{$meta->templates} ) {
+                $templates->{$tmpl} = $val->{string};
+            }
+        }
+    }
+    return $templates;
 }
 
 sub strip($){
