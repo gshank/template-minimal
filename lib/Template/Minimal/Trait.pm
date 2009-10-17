@@ -17,23 +17,24 @@ has 'templates' => (
        tmpl         => 'process',
     }
 );
-has '_template_strings' => (
+has '_snippets' => (
     is => 'ro',
     isa => 'HashRef',
     traits => ['Hash'],
     lazy => 1,
-    builder => '_build_template_strings',
+    builder => '_build_snippets',
     handles => {
-       _add_tmpl_string => 'set',
-       _get_tmpl_string => 'get',
+       _add_snippet => 'set',
+       _get_snippet => 'get',
     }
 );
 
 sub _build_templates {
     my $self = shift;
     my $tm = Template::Minimal->new( $self->tm_args );
-    foreach my $tmpl ( keys %{$self->_template_strings} ) {
-        $tm->add_template( $tmpl, $self->_get_tmpl_string($tmpl) );
+    foreach my $name ( keys %{$self->_snippets} ) {
+        my $snippet = $self->_get_snippet($name);
+        $tm->add_template( $name, $snippet->{template}) if exists $snippet->{template};
     }
     return $tm;
 }
@@ -110,29 +111,25 @@ sub vars {
     return \%transformed_vars;
 }
 
-sub _build_template_strings {
+sub _build_snippets {
     my $self = shift;
     my @field_list;
 
-    my $templates = {};
+    my $snippets = {};
     foreach my $sc ( reverse $self->meta->linearized_isa ) {
         my $meta = $sc->meta;
         if ( $meta->can('calculate_all_roles') ) {
             foreach my $role ( reverse $meta->calculate_all_roles ) {
-                if ( $role->can('templates') && $role->has_templates ) {
-                    while ( my ($tmpl, $val) = each %{$role->templates} ) {
-                        $templates->{$tmpl} = $val->{string};
-                    }
+                if ( $role->can('snippets') && $role->has_snippets ) {
+                    $snippets = $role->snippets;
                 }
             }
         }
-        if ( $meta->can('templates') && $meta->has_templates ) {
-            while ( my ($tmpl, $val)  = each %{$meta->templates} ) {
-                $templates->{$tmpl} = $val->{string};
-            }
+        if ( $meta->can('snippets') && $meta->has_snippets ) {
+            $snippets = {%{$snippets}, %{$meta->snippets}};
         }
     }
-    return $templates;
+    return $snippets;
 }
 
 sub strip($){
@@ -163,11 +160,11 @@ __END__
 
 =head1 NAME
 
-Template::Minimal::Trait::String - use TM to interpolate lexical variables
+Template::Minimal::Trait - use TM to interpolate lexical variables
 
 =head1 SYNOPSIS
 
-  with 'Template::Minimal::Trait::String';
+  with 'Template::Minimal::Trait';
 
   sub BUILD {
      my $self = shift;
@@ -187,7 +184,7 @@ Template::Minimal::Trait::String - use TM to interpolate lexical variables
 
 =head1 DESCRIPTION
 
-Template::Minimal::String exports a C<tm> function, which takes a 
+Template::Minimal::Trait contains a C<tm> function, which takes a 
 (L<Template::Minimal>) template as its argument.  It uses the
 current lexical scope to resolve variable references.  So if you say:
 
@@ -198,7 +195,7 @@ current lexical scope to resolve variable references.  So if you say:
 
 the result will be C<< 42 <-> 24 >>.
 
-TM/TT provides a slightly less rich namespace for variables than perl, so
+Because perl variables with the same name but different types may collide,
 we have to do some mapping.  Arrays are always translated from
 C<@array> to C<array_a> and hashes are always translated from C<%hash>
 to C<hash_h>.  Scalars are special and retain their original name, but
@@ -268,7 +265,6 @@ EOTT
 Gerda Shank  E<lt>gshank@cpan.orgE<gt>
 
 This is Jonathan Rockway's L<String::TT> without the TT prereq
-
 
 =head1 LICENSE
 

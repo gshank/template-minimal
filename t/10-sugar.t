@@ -7,14 +7,14 @@ use Test::More;
     use Template::Minimal::Sugar;
 
     has 'name' => ( is => 'ro', default => 'Test' );
-    template 'foo' => ( string => 'Hello, World!' );
-    template 'bar' => ( string => '[% foo %][% bar %]' );
+    snippet 'foo' => ( template => 'Hello, World!' );
+    snippet 'bar' => ( template => '[% foo %][% bar %]' );
 }
 
 my $tester = Test::Sugar->new;
 ok( $tester, 'compiled ok' );
-ok( $tester->meta->has_templates, 'has templates' );
-is( $tester->meta->get_template('foo')->{string}, 'Hello, World!', 'got template');
+ok( $tester->meta->has_snippets, 'has templates' );
+is( $tester->meta->get_snippet('foo')->{template}, 'Hello, World!', 'got template');
 
 {
     package Test::With::Sugar;
@@ -22,8 +22,8 @@ is( $tester->meta->get_template('foo')->{string}, 'Hello, World!', 'got template
     with 'Template::Minimal::Trait';
 
     has 'name' => ( is => 'ro', default => 'TestWith' );
-    template 'foo' => ( string => 'Hello, World!' );
-    template 'bar' => ( string => '[% foo %], [% bar %]!' );
+    snippet 'foo' => ( template => 'Hello, World!' );
+    snippet 'bar' => ( template => '[% foo %], [% bar %]!' );
 
     sub render_bar {
         my $self = shift;
@@ -34,8 +34,8 @@ is( $tester->meta->get_template('foo')->{string}, 'Hello, World!', 'got template
 }
 $tester = Test::With::Sugar->new;
 ok( $tester, 'compiled ok' );
-ok( $tester->meta->has_templates, 'has templates' );
-is( $tester->meta->get_template('foo')->{string}, 'Hello, World!', 'got template');
+ok( $tester->meta->has_snippets, 'has snippets' );
+is( $tester->meta->get_snippet('foo')->{template}, 'Hello, World!', 'got template');
 ok( $tester->has_template('foo'), 'template has been added' );
 is( $tester->render_bar, 'Hello, World!', 'renders bar' );
 

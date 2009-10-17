@@ -12,17 +12,16 @@ Template::Minimal::Sugar - to add template sugar
 
 =head1 SYNOPSIS
 
-Enables the use of template specification sugar (template).
+Enables the use of template specification sugar (snippet).
 Use this module instead of C< use Moose; >
 
    package MyApp::Form::Foo;
-   use Template::Minimal::Moose;
+   use Template::Minimal::Sugar;
    use namespace::autoclean;
 
-   template 'user' => '
-       [% form.name %] is a user form';
+   snippet 'user' => ( template => '[% form.name %] is a user form' );
 
-   template 'header' => '<h1>Hello, World!</h1>';
+   snippet 'header' => ( template => '<h1>Hello, World!</h1>' );
 
    
    1;
@@ -30,7 +29,7 @@ Use this module instead of C< use Moose; >
 =cut
 
 Moose::Exporter->setup_import_methods(
-    with_caller => [ 'template' ],
+    with_meta => [ 'snippet' ],
     also        => 'Moose',
 );
 
@@ -46,10 +45,10 @@ sub init_meta {
     return $meta;
 }
 
-sub template {
-    my ( $class, $name, %options ) = @_;
+sub snippet {
+    my ( $meta, $name, %options ) = @_;
 
-    $class->meta->add_template( $name, \%options  );
+    $meta->add_snippet( $name, \%options  );
 }
 
 =head1 AUTHOR
