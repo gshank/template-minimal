@@ -80,30 +80,30 @@ has '_templates' => (
 
 
 my ( $START, $END ) = map { qr{\Q$_\E} } qw([% %]);
-my $tmpl_declaration = qr{$START (?:.+?) $END}x;
-my $tmpl_text        = qr{
+my $tmrx_declaration = qr{$START (?:.+?) $END}x;
+my $tmrx_text        = qr{
     (?:\A|(?<=$END))    # Start matching from the start of the file or end of a declaration
         .*?                 # everything in between
     (?:\Z|(?=$START))   # Finish at the end of the file or start of another declaration
 }msx;
-my $tmpl_chunks = qr{ ($tmpl_text)?  ($tmpl_declaration)?  }msx;
-my $tmpl_ident = qr{
+my $tmrx_chunks = qr{ ($tmrx_text)?  ($tmrx_declaration)?  }msx;
+my $tmrx_ident = qr{
     [a-z][a-z0-9_\.]+ # any alphanumeric characters and underscores, but must start
                     # with a letter; everything must be lower case
 }x;
-my $tmpl_foreach = qr{ FOREACH \s+ ($tmpl_ident) \s+ IN \s+ ($tmpl_ident) }x;
-my $tmpl_if = qr{ IF \s+ ($tmpl_ident) }x;
-my $tmpl_include = qr{ INCLUDE \s+ ["']? ([^"']+) ["']?  }x;
-my $tmpl_newline = qr{ NEWLINE }x;
-my $tmpl_vars = qr{ (?: \s* \| \s* )?  ( $tmpl_ident ) }x;
-my $tmpl_directive = qr{
+my $tmrx_foreach = qr{ FOREACH \s+ ($tmrx_ident) \s+ IN \s+ ($tmrx_ident) }x;
+my $tmrx_if = qr{ IF \s+ ($tmrx_ident) }x;
+my $tmrx_include = qr{ INCLUDE \s+ ["']? ([^"']+) ["']?  }x;
+my $tmrx_newline = qr{ NEWLINE }x;
+my $tmrx_vars = qr{ (?: \s* \| \s* )?  ( $tmrx_ident ) }x;
+my $tmrx_directive = qr{
     $START
         \s*?
         (END
-            | $tmpl_foreach
-            | $tmpl_if
-            | $tmpl_include
-            | $tmpl_newline
+            | $tmrx_foreach
+            | $tmrx_if
+            | $tmrx_include
+            | $tmrx_newline
             | [a-z0-9_\.\s\|]+
         )
         \s*?
@@ -116,16 +116,16 @@ sub parse {
     my (@chunks) = $self->get_chunks($tmpl); 
     my @AST;
     while ( my $chunk = shift @chunks ) {
-        if ( my ($tdir) = $chunk =~ $tmpl_directive ) {
-            if ( my ($for_name) = $tdir =~ $tmpl_foreach ) {
+        if ( my ($tdir) = $chunk =~ $tmrx_directive ) {
+            if ( my ($for_name) = $tdir =~ $tmrx_foreach ) {
                 $for_name =~ s/['"]//g;
                 push @AST, [ FOREACH => [$1, $2] ];
             }
-            elsif ( my ($if_name) = $tdir =~ $tmpl_if ) {
+            elsif ( my ($if_name) = $tdir =~ $tmrx_if ) {
                 $if_name =~ s/['"]//g;
                 push @AST, [ IF => $if_name ];
             }
-            elsif ( my ($inc_name) = $tdir =~ $tmpl_include ) {
+            elsif ( my ($inc_name) = $tdir =~ $tmrx_include ) {
                 $inc_name =~ s/['"]//g;
                 $inc_name =~ s/\s+$//g;
                 push @AST, [ INCLUDE => $inc_name ];
@@ -136,7 +136,7 @@ sub parse {
             elsif ( $tdir =~ m{NEWLINE} ) {
                 push @AST, [ NEWLINE => 1 ];
             }
-            elsif ( my (@items) = $tdir =~ m{$tmpl_vars}g ) {
+            elsif ( my (@items) = $tdir =~ m{$tmrx_vars}g ) {
                 push @AST, [ VARS => [@items] ];
             }
         }
@@ -151,7 +151,7 @@ sub get_chunks {
     my ( $self, $tmpl ) = @_;
 
     $tmpl =~ s/\n/[% NEWLINE %]/g;
-    my (@chunks) = grep { defined $_ && $_ } ( $tmpl =~ m{$tmpl_chunks}g );
+    my (@chunks) = grep { defined $_ && $_ } ( $tmpl =~ m{$tmrx_chunks}g );
     return @chunks;
 }
 
