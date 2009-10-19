@@ -27,10 +27,10 @@ $ast = $tm->parse($template);
 $optimized = $tm->_optimize($ast);
 $code_str = $tm->compile($optimized);
 ok( $code_str, 'compiled' );
-my $code_ref = eval($code_str);
-ok( $code_ref, 'got coderef' );
+my $coderef = eval($code_str);
+ok( $coderef, 'got coderef' );
 my $stash = Stash->new( {testing => 'Yes'});
-$output = $code_ref->($tm, $stash);
+$output = $coderef->($tm, $stash);
 ok( $output, 'got output' );
 
 $template = 'This is not a very \'fair\' outcome.
@@ -39,9 +39,9 @@ $ast = $tm->parse($template);
 $optimized = $tm->_optimize($ast);
 $code_str = $tm->compile($optimized);
 ok( $code_str, 'compiled' );
-$code_ref = eval($code_str);
-ok( $code_ref, 'got coderef' );
-$output = $code_ref->($tm, $stash);
+$coderef = eval($code_str);
+ok( $coderef, 'got coderef' );
+$output = $coderef->($tm, $stash);
 ok( $output, 'got output' );
 
 
@@ -61,6 +61,34 @@ $ast = $tm->parse($template);
 cmp_deeply($ast, $expected, 'parsed template');
 $optimized = $tm->_optimize($ast);
 
+$template = "[% IF max EQ foo %]";
+$ast = $tm->parse($template);
+$expected = [[ IF_EQ => [[ VARS => ['max']], [ VARS => ['foo']]]]];
+cmp_deeply($ast, $expected, 'parsed if eq' );
+$template = "[% IF max EQ 'foo' %]";
+$ast = $tm->parse($template);
+$expected = [[ IF_EQ => [[ VARS => ['max']], [ TEXT => 'foo']]]];
+cmp_deeply($ast, $expected, 'parsed if eq with text');
+
+$code_str = $tm->compile(
+    [[ IF_EQ => [[ VARS => ['max']], [ TEXT => 'foobar']]], [ TEXT => 'Greetings'],[ 'END' ]],
+);
+$expected = 
+'sub {
+  my ($ctx, $stash) = @_;
+  my $out;
+  if ( $stash->get(\'max\') eq \'foobar\' ) {
+  $out .= \'Greetings\';
+  }
+  return $out;
+}
+';
+is( $code_str, $expected, 'text compiles' );
+$coderef = eval($code_str);
+ok( $coderef, 'text evals ok');
+$stash = Stash->new({max => 'foobar'});
+$output = $coderef->($tm, $stash);
+is( $output, "Greetings", 'text executes ok');
 
 
 done_testing;

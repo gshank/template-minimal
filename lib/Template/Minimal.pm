@@ -42,21 +42,11 @@ but only implementing a very small subset of TT's syntax.
    [% somehash.somekey %]
    [% someobj.somemethod %]
    [% IF somevar %]....[% END %]
+   [% IF somevar EQ somevalue %]...[% END %]
    [% FOREACH element IN somelist %] ... [% END %]
    [% INCLUDE some_other_template %]
 
 =cut
-
-our $TMPL_CODE_START = <<'END';
-sub {
-  my ($ctx, $stash) = @_;
-  my $out;
-END
-
-our $TMPL_CODE_END = <<'END';
-  return $out;
-}
-END
 
 has 'include_path' => (
     is       => 'rw',
@@ -79,6 +69,7 @@ has '_templates' => (
 );
 
 
+# regexes for parsing
 my ( $START, $END ) = map { qr{\Q$_\E} } qw([% %]);
 my $tmrx_declaration = qr{$START (?:.+?) $END}x;
 my $tmrx_text        = qr{
@@ -92,7 +83,9 @@ my $tmrx_ident = qr{
                     # with a letter; everything must be lower case
 }x;
 my $tmrx_foreach = qr{ FOREACH \s+ ($tmrx_ident) \s+ IN \s+ ($tmrx_ident) }x;
+my $tmrx_quoted = qr{ \'($tmrx_ident)\' }x;
 my $tmrx_if = qr{ IF \s+ ($tmrx_ident) }x;
+my $tmrx_if_eq = qr{ IF \s+ ('? $tmrx_ident '?) \s+ EQ \s+ ('? $tmrx_ident '?) }x;
 my $tmrx_include = qr{ INCLUDE \s+ ["']? ([^"']+) ["']?  }x;
 my $tmrx_newline = qr{ NEWLINE }x;
 my $tmrx_vars = qr{ (?: \s* \| \s* )?  ( $tmrx_ident ) }x;
@@ -102,6 +95,7 @@ my $tmrx_directive = qr{
         (END
             | $tmrx_foreach
             | $tmrx_if
+            | $tmrx_if_eq
             | $tmrx_include
             | $tmrx_newline
             | [a-z0-9_\.\s\|]+
@@ -109,6 +103,17 @@ my $tmrx_directive = qr{
         \s*?
     $END
 }x;
+
+# for compiling
+our $TMPL_CODE_START = <<'END';
+sub {
+  my ($ctx, $stash) = @_;
+  my $out;
+END
+our $TMPL_CODE_END = <<'END';
+  return $out;
+}
+END
 
 sub parse {
     my ( $self, $tmpl ) = @_;
@@ -120,6 +125,19 @@ sub parse {
             if ( my ($for_name) = $tdir =~ $tmrx_foreach ) {
                 $for_name =~ s/['"]//g;
                 push @AST, [ FOREACH => [$1, $2] ];
+            }
+            elsif ( my (@parts) = $tdir =~ $tmrx_if_eq ) {
+               my @if_eq;
+               for my $part (@parts) {
+                   if( $part =~ m{'} ) {
+                       $part =~ s/['"]//g;
+                       push @if_eq, [ TEXT => $part ];
+                   }
+                   else {
+                       push @if_eq, [ VARS => [ $part ] ]; 
+                    }   
+                }
+                push @AST, [ IF_EQ => \@if_eq ]; 
             }
             elsif ( my ($if_name) = $tdir =~ $tmrx_if ) {
                 $if_name =~ s/['"]//g;
@@ -227,6 +245,14 @@ sub compile {
             $code .= "  foreach my \$$each ( \@{\$stash\->get('$array')} ) {\n";
             $code .= "    \$stash->set_var('$each', \$$each);\n";
         }
+        elsif ( $type eq 'IF_EQ' ) {
+            $depth++;
+            $code .= "  if ( ";
+            $code .= text_or_vars($val->[0]);
+            $code .= "eq ";
+            $code .= text_or_vars($val->[1]);
+            $code .= ") {\n";
+        }
         elsif ( $type eq 'IF' ) {
            $depth++;
            $code .= " if ( \$stash->get('$val') ) {\n";
@@ -266,6 +292,21 @@ sub compile {
     }
     if ( !$depth ) {
         $code .= $TMPL_CODE_END;
+    }
+    return $code;
+}
+
+sub text_or_vars {
+    my ($ast) = @_;
+
+    my $code;
+    my ( $type, $val ) = @$ast;
+    if( $type eq 'TEXT' ) { 
+        $code .= "\'$val\' ";
+    }
+    elsif ( $type eq 'VARS' ) {
+        my $part = $val->[0];
+        $code .= "\$stash->get(\'$part\') ";
     }
     return $code;
 }
