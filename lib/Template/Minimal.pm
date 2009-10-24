@@ -73,11 +73,12 @@ has '_templates' => (
 my ( $START, $END ) = map { qr{\Q$_\E} } qw([% %]);
 my $tmrx_declaration = qr{$START (?:.+?) $END}x;
 my $tmrx_text        = qr{
-    (?:\A|(?<=$END))    # Start matching from the start of the file or end of a declaration
+    (?:\A|(?<=$END)|^)    # Start matching from the start of the file, end of a declaration, line start 
         .*?                 # everything in between
-    (?:\Z|(?=$START))   # Finish at the end of the file or start of another declaration
+    (?:\Z|(?=$START)|$)   # Finish at the end of the file, start of another declaration, line end
 }msx;
-my $tmrx_chunks = qr{ ($tmrx_text)?  ($tmrx_declaration)?  }msx;
+my $tmrx_nl = qr{\n};
+my $tmrx_chunks = qr{ ($tmrx_nl)? ($tmrx_text)?  ($tmrx_declaration)?  }msx;
 my $tmrx_ident = qr{
     [a-z][a-z0-9_\.]+ # any alphanumeric characters and underscores, but must start
                     # with a letter; everything must be lower case
@@ -151,12 +152,12 @@ sub parse {
             elsif ( $tdir =~ m{END} ) {
                 push @AST, ['END'];
             }
-            elsif ( $tdir =~ m{NEWLINE} ) {
-                push @AST, [ NEWLINE => 1 ];
-            }
             elsif ( my (@items) = $tdir =~ m{$tmrx_vars}g ) {
                 push @AST, [ VARS => [@items] ];
             }
+        }
+        elsif ( $chunk =~ $tmrx_nl ) {
+            push @AST, [ NEWLINE => 1 ];
         }
         else {
             push @AST, [ TEXT => $chunk ];
@@ -168,7 +169,6 @@ sub parse {
 sub get_chunks {
     my ( $self, $tmpl ) = @_;
 
-    $tmpl =~ s/\n/[% NEWLINE %]/g;
     my (@chunks) = grep { defined $_ && $_ } ( $tmpl =~ m{$tmrx_chunks}g );
     return @chunks;
 }
