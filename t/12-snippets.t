@@ -8,7 +8,7 @@ use lib ('t/lib');
     package Test::Page;
     use Moose;
     with 'Template::Test';
-    with 'Template::Minimal::Trait';
+    with 'Template::Snippets::TraitFor::Collection';
 
     sub render {
         my $self = shift;

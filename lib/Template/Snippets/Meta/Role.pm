@@ -1,4 +1,4 @@
-package Template::Minimal::Meta::Role;
+package Template::Snippets::Meta::Role;
 use Moose::Role;
 use namespace::autoclean;
 

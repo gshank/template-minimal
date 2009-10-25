@@ -4,10 +4,10 @@ use warnings;
 use Test::More;
 use Test::Deep;
 
-use Template::Minimal;
-use aliased 'Template::Minimal::Stash';
+use Template::Snippets;
+use aliased 'Template::Snippets::Stash';
 
-my $tm = Template::Minimal->new;
+my $tm = Template::Snippets->new;
 
 
 # concat variables

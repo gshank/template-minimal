@@ -1,8 +1,8 @@
-package Template::Minimal;
+package Template::Snippets;
 
 use Moose;
 use Try::Tiny;
-use aliased 'Template::Minimal::Stash';
+use aliased 'Template::Snippets::Stash';
 
 use 5.008;
 
@@ -10,7 +10,7 @@ our $VERSION = '0.01';
 
 =head1 NAME
 
-Template::Minimal - minimal, lightweight templates
+Template::Snippets - minimal, lightweight templates
 
 =head1 SYNOPSIS
 
@@ -19,10 +19,10 @@ Template::Minimal - minimal, lightweight templates
         [% IF f.size %]size="[% f.size %]"[% END %] 
         [% IF f.maxlength %]maxlength="[% f.maxlength %]"[% END %]
         value="[% r.fif %]">';
-    has 'template' => ( is => 'ro', isa => 'Template::Minimal', builder => 'build_template');
+    has 'template' => ( is => 'ro', isa => 'Template::Snippets', builder => 'build_template');
     sub build_template {
         my $self = shift;
-        my $tt = Template::Minimal->new;
+        my $tt = Template::Snippets->new;
         $tt->add_template('text_widget', $widget );
         return $tt;
     }

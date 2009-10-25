@@ -4,10 +4,10 @@ use Test::More;
 use Test::Deep;
 use Test::Differences;
 
-use_ok('Template::Minimal');
-use aliased 'Template::Minimal::Stash';
+use_ok('Template::Snippets');
+use aliased 'Template::Snippets::Stash';
 
-my $tm = Template::Minimal->new();
+my $tm = Template::Snippets->new();
 
 my $compiled = $tm->compile(
     [[ TEXT => 'Hello, world!' ]],
@@ -74,7 +74,7 @@ $expected =
 
 is( $compiled, $expected, 'foreach compiles');
 
-$tm = Template::Minimal->new();
+$tm = Template::Snippets->new();
 
 my $concat = $tm->parse("[% foo %][% bar %]" );
 parse_check('[% name %]', [[ VARS => ['name'] ]], 'variable parses');
@@ -111,7 +111,7 @@ sub parse_check {
 
 basic: {
     my $stash = Stash->new({ name => 'Perl Hacker', title => 'paper', });
-    my $tm = Template::Minimal->new({ include_path => ['t/tmpl'], });
+    my $tm = Template::Snippets->new({ include_path => ['t/tmpl'], });
     my $out = $tm->process_file('foo.tpl', $stash);
     my $expected = <<'END';
 
@@ -129,7 +129,7 @@ gigo: {
     my $stash = Stash->new({
         name => 'Perl Hacker',
     });
-    my $tm = Template::Minimal->new({
+    my $tm = Template::Snippets->new({
         include_path => ['t/tmpl'],
     });
     my $out = $tm->process_file('horror.tpl', $stash);

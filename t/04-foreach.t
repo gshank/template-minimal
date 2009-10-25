@@ -3,10 +3,10 @@ use warnings;
 use Test::More;
 use Test::Differences;
 
-use Template::Minimal;
-use aliased 'Template::Minimal::Stash';
+use Template::Snippets;
+use aliased 'Template::Snippets::Stash';
 
-my $tm = Template::Minimal->new;
+my $tm = Template::Snippets->new;
 my $template = "Testing....
 [% FOREACH tag IN tags %]
 [% tag %]
@@ -63,7 +63,7 @@ $stash = Stash->new({
     items => ['Ginger', 'The Skipper'],
     possible_geek => 1,
 });
-$tm = Template::Minimal->new({
+$tm = Template::Snippets->new({
     include_path => ['t/tmpl'],
 });
 $out = $tm->process_file('nested.tpl', $stash );

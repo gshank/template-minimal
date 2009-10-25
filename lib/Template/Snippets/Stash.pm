@@ -1,15 +1,15 @@
-package Template::Minimal::Stash;
+package Template::Snippets::Stash;
 
 use Moose;
 use Try::Tiny;
 
 =head1 NAME
 
-Template::Minimal::Stash
+Template::Snippets::Stash
 
 =head1 SYNOPSIS
 
-For use in Template::Minimal templates. Retrieves the value of variables
+For use in Template::Snippets templates. Retrieves the value of variables
 in C< var.key >> and C< var.method > style.
 
 =cut

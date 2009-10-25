@@ -6,7 +6,8 @@ use Test::More;
     package Test::TM::String;
 
     use Moose;
-    with 'Template::Minimal::Trait';
+    with 'Template::Snippets::TraitFor::Collection';
+    with 'Template::Snippets::TraitFor::Inline';
 
     sub BUILD {
         my $self = shift;

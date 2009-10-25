@@ -1,4 +1,4 @@
-package  Template::Minimal::Sugar;
+package  Template::Snippets::Sugar;
 
 use Moose;
 use Moose::Exporter;
@@ -8,7 +8,7 @@ use namespace::autoclean;
 
 =head1 NAME
 
-Template::Minimal::Sugar - to add template sugar
+Template::Snippets::Sugar - to add template sugar
 
 =head1 SYNOPSIS
 
@@ -16,7 +16,7 @@ Enables the use of template specification sugar (snippet).
 Use this module instead of C< use Moose; >
 
    package MyApp::Form::Foo;
-   use Template::Minimal::Sugar;
+   use Template::Snippets::Sugar;
    use namespace::autoclean;
 
    snippet 'user' => ( template => '[% form.name %] is a user form' );
@@ -40,7 +40,7 @@ sub init_meta {
     Moose->init_meta(%options);
     my $meta = Moose::Util::MetaRole::apply_metaclass_roles(
         for_class       => $options{for_class},
-        metaclass_roles => ['Template::Minimal::Meta::Role'],
+        metaclass_roles => ['Template::Snippets::Meta::Role'],
     );
     return $meta;
 }

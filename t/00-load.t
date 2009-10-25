@@ -2,13 +2,19 @@ use strict;
 use warnings;
 use Test::More;
 
-use_ok('Template::Minimal');
-use_ok('Template::Minimal::Stash');
+use_ok('Template::Snippets');
+use_ok('Template::Snippets::Stash');
 {
-    package Test::Trait;
+    package Test::Collection::Trait;
     use Moose;
-    with 'Template::Minimal::Trait';
+    with 'Template::Snippets::TraitFor::Collection';
 }
-ok( Test::Trait->new, 'Template::Minimal::Trait compiles ok' );
+ok( Test::Collection::Trait->new, 'Template::Snippets::TraitFor::Collection compiles ok' );
+{ 
+    package Test::Inline::Trait;
+    use Moose;
+    with 'Template::Snippets::TraitFor::Inline';
+}
+ok( Test::Inline::Trait->new, 'Template::Snippets::TraitFor::Inline compiles ok' );
 
 done_testing;

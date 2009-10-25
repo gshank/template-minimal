@@ -1,6 +1,6 @@
 package Template::Test;
 
-use Template::Minimal::Sugar::Role;
+use Template::Snippets::Sugar::Role;
 use namespace::autoclean;
 
 snippet 'main' => ( template => '

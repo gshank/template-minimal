@@ -2,12 +2,12 @@ use strict;
 use warnings;
 use Test::More;
 
-use_ok('Template::Minimal::Stash');
+use_ok('Template::Snippets::Stash');
 
-use aliased 'Template::Minimal::Stash';
+use aliased 'Template::Snippets::Stash';
 
 my $stash = Stash->new();
-isa_ok($stash, 'Template::Minimal::Stash');
+isa_ok($stash, 'Template::Snippets::Stash');
 
 $stash = Stash->new({ a => 1,  });
 is( $stash->get('a'), 1, 'Basic stash retrieval');

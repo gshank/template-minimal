@@ -2,8 +2,8 @@ use strict;
 use warnings;
 use Test::More;
 
-use Template::Minimal;
-use Template::Minimal::String ('tm', 'strip');
+use Template::Snippets;
+use Template::Snippets::String ('tm', 'strip');
 use utf8;
 
 is( a(), 'foobar', 'foobar works');

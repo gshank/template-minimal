@@ -2,10 +2,10 @@ use strict;
 use warnings;
 use Test::More;
 
-use Template::Minimal;
-use aliased 'Template::Minimal::Stash';
+use Template::Snippets;
+use aliased 'Template::Snippets::Stash';
 
-my $tm = Template::Minimal->new;
+my $tm = Template::Snippets->new;
 $tm->add_template('hello', 'Hello, [% name %]!' );
 
 my $template = 'Test: [% INCLUDE hello %] strikes again. [% foo %]'; 

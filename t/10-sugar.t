@@ -4,7 +4,7 @@ use Test::More;
 
 {
     package Test::Sugar;
-    use Template::Minimal::Sugar;
+    use Template::Snippets::Sugar;
 
     has 'name' => ( is => 'ro', default => 'Test' );
     snippet 'foo' => ( template => 'Hello, World!' );
@@ -18,8 +18,8 @@ is( $tester->meta->get_snippet('foo')->{template}, 'Hello, World!', 'got templat
 
 {
     package Test::With::Sugar;
-    use Template::Minimal::Sugar;
-    with 'Template::Minimal::Trait';
+    use Template::Snippets::Sugar;
+    with 'Template::Snippets::TraitFor::Collection';
 
     has 'name' => ( is => 'ro', default => 'TestWith' );
     snippet 'foo' => ( template => 'Hello, World!' );

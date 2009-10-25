@@ -3,9 +3,9 @@ use warnings;
 
 use inc::Module::Install;
 
-name 'Template-Minimal';
+name 'Template-Snippets';
 author 'Gerda Shank';
-all_from 'lib/Template/Minimal.pm';
+all_from 'lib/Template/Snippets.pm';
 license 'perl';
 
 #repository 'http://github.com/gshank/template-minimal/tree/master';

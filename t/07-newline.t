@@ -5,10 +5,10 @@ use Test::More;
 use Test::Deep;
 use Test::Differences;
 
-use_ok('Template::Minimal');
-use aliased 'Template::Minimal::Stash';
+use_ok('Template::Snippets');
+use aliased 'Template::Snippets::Stash';
 
-my $tm = Template::Minimal->new();
+my $tm = Template::Snippets->new();
 
 my $compiled = $tm->compile(
     [[ TEXT => 'Newline' ], [ NEWLINE => 1 ]],

@@ -6,7 +6,7 @@ use Test::More;
     package Widget::Field::Text;
 
     use Moose::Role;
-    use Template::Minimal;
+    use Template::Snippets;
 
     my $widget = <<'END';
     <input type="text" name="[% f.html_name %]" id="[% f.id %]" 
@@ -14,10 +14,10 @@ use Test::More;
         [% IF f.maxlength %]maxlength="[% f.maxlength %]"[% END %]
         value="[% r.fif %]">
 END
-    has 'template' => ( is => 'ro', isa => 'Template::Minimal', builder => 'build_template');
+    has 'template' => ( is => 'ro', isa => 'Template::Snippets', builder => 'build_template');
     sub build_template {
         my $self = shift;
-        my $tm = Template::Minimal->new;
+        my $tm = Template::Snippets->new;
         $tm->add_template('text_widget', $widget );
         return $tm;
     }
